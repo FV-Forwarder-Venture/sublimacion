@@ -18,7 +18,6 @@
         .bg-fv-orange { background-color: #e85d04; }
         .accent-fv { accent-color: #e85d04; }
         
-        /* Eliminar flechas del input number para diseño limpio */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
@@ -29,9 +28,11 @@
         .modal-enter { animation: slideUp 0.3s ease-out forwards; }
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        /* Clase para resaltar la fila de precio activa */
         .price-active { background-color: #e85d04; color: white !important; transform: scale(1.02); padding-left: 8px; padding-right: 8px; border-radius: 4px; font-weight: 900 !important; }
         .price-active span { color: white !important; }
+
+        /* Estilo para la miniatura activa */
+        .thumb-active { border-color: #e85d04 !important; opacity: 1 !important; transform: scale(1.05); }
     </style>
 </head>
 <body class="min-h-screen relative text-gray-900">
@@ -112,37 +113,43 @@
     </div>
 
     <div id="product-modal" class="hidden fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0">
-        <div class="bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl relative transform transition-all scale-95 flex flex-col md:flex-row" id="product-modal-content">
+        <div class="bg-white w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl relative transform transition-all scale-95 flex flex-col md:flex-row max-h-[90vh] md:h-auto" id="product-modal-content">
             <button onclick="closeProductModal()" class="absolute top-4 right-4 w-10 h-10 bg-black/10 hover:bg-black/20 rounded-full flex items-center justify-center z-10 transition">
                 <i class="fa-solid fa-xmark text-xl text-gray-800"></i>
             </button>
             
-            <div class="relative w-full md:w-1/2 aspect-square md:aspect-auto bg-gray-100 p-6 flex items-center justify-center">
-                <img id="modal-img" src="" class="w-full h-full object-contain max-h-[300px] md:max-h-full">
+            <div class="w-full md:w-1/2 bg-gray-50 p-6 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200">
+                <div class="w-full aspect-square flex items-center justify-center mb-4 bg-white rounded-xl shadow-sm border border-gray-100 p-2">
+                    <img id="modal-img" src="" class="w-full h-full object-contain max-h-[350px]">
+                </div>
+                <div id="modal-gallery" class="flex gap-2 overflow-x-auto w-full px-1 py-2 hide-scrollbar justify-center">
+                    </div>
             </div>
             
-            <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col justify-between">
+            <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col justify-between overflow-y-auto">
                 <div>
                     <span id="modal-category" class="text-xs font-black text-orange-600 uppercase tracking-widest">CATEGORÍA</span>
-                    <h2 id="modal-title" class="text-2xl font-black text-gray-900 leading-tight mt-1 mb-2">Nombre</h2>
+                    <h2 id="modal-title" class="text-2xl md:text-3xl font-black text-gray-900 leading-tight mt-1 mb-2">Nombre</h2>
                     <p class="text-gray-500 text-xs mb-4 font-mono bg-gray-50 inline-block px-2 py-1 rounded">SKU: <span id="modal-sku" class="font-bold text-gray-800"></span></p>
                     
-                    <div class="bg-gray-50 rounded-lg p-3 mb-4 border border-gray-100 transition-all">
-                        <p class="text-xs font-bold text-gray-500 uppercase mb-2">Tabla de Precios (Unitario)</p>
-                        <div class="grid grid-cols-2 gap-y-1 text-sm">
-                            <div id="row-1" class="flex justify-between border-b border-gray-200 pb-1 transition-all">
+                    <div class="bg-white rounded-xl p-4 mb-6 border border-gray-200 shadow-sm">
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-tags text-orange-500"></i> Descuentos por Volumen
+                        </p>
+                        <div class="grid grid-cols-2 gap-y-2 text-sm">
+                            <div id="row-1" class="flex justify-between border-b border-gray-100 pb-1 transition-all">
                                 <span class="text-gray-600">1+ und</span>
                                 <span id="price-1" class="font-bold text-gray-900"></span>
                             </div>
-                            <div id="row-12" class="flex justify-between border-b border-gray-200 pb-1 transition-all">
+                            <div id="row-12" class="flex justify-between border-b border-gray-100 pb-1 transition-all">
                                 <span class="text-gray-600">12+ und</span>
                                 <span id="price-12" class="font-bold text-fv-blue"></span>
                             </div>
-                            <div id="row-50" class="flex justify-between border-b border-gray-200 pb-1 transition-all">
+                            <div id="row-50" class="flex justify-between border-b border-gray-100 pb-1 transition-all">
                                 <span class="text-gray-600">50+ und</span>
                                 <span id="price-50" class="font-bold text-fv-blue"></span>
                             </div>
-                            <div id="row-100" class="flex justify-between border-b border-gray-200 pb-1 transition-all">
+                            <div id="row-100" class="flex justify-between border-b border-gray-100 pb-1 transition-all">
                                 <span class="text-gray-600">100+ und</span>
                                 <span id="price-100" class="font-bold text-fv-blue"></span>
                             </div>
@@ -153,25 +160,25 @@
                         </div>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Ingresa la Cantidad:</label>
-                        <div class="flex items-center border-2 border-fv-blue rounded-xl h-12 overflow-hidden w-full max-w-[200px]">
-                            <button onclick="updateModalInput(-1)" class="w-12 h-full bg-gray-50 hover:bg-gray-200 text-gray-600 font-bold text-xl active:scale-95 transition">-</button>
-                            <input type="number" id="modal-qty-input" value="1" min="1" class="w-full h-full text-center font-black text-xl border-none focus:ring-0 text-fv-blue" oninput="highlightActivePrice()">
-                            <button onclick="updateModalInput(1)" class="w-12 h-full bg-gray-50 hover:bg-gray-200 text-gray-600 font-bold text-xl active:scale-95 transition">+</button>
+                    <div class="mb-6">
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Ingresa la Cantidad:</label>
+                        <div class="flex items-center border-2 border-fv-blue rounded-xl h-14 overflow-hidden w-full max-w-[200px] shadow-sm">
+                            <button onclick="updateModalInput(-1)" class="w-14 h-full bg-gray-50 hover:bg-gray-200 text-gray-600 font-bold text-2xl active:scale-95 transition">-</button>
+                            <input type="number" id="modal-qty-input" value="1" min="1" class="w-full h-full text-center font-black text-2xl border-none focus:ring-0 text-fv-blue bg-white" oninput="highlightActivePrice()">
+                            <button onclick="updateModalInput(1)" class="w-14 h-full bg-gray-50 hover:bg-gray-200 text-gray-600 font-bold text-2xl active:scale-95 transition">+</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-6 gap-2 mt-auto">
-                    <button onclick="shareProduct()" class="col-span-1 bg-gray-100 text-gray-600 rounded-xl flex items-center justify-center hover:bg-gray-200 transition h-12" title="Copiar Enlace">
-                        <i class="fa-solid fa-link text-lg"></i>
+                    <button onclick="shareProduct()" class="col-span-1 bg-gray-100 text-gray-600 rounded-xl flex items-center justify-center hover:bg-gray-200 transition h-14" title="Copiar Enlace">
+                        <i class="fa-solid fa-link text-xl"></i>
                     </button>
-                    <button onclick="shareProductWhatsApp()" class="col-span-1 bg-green-500 text-white rounded-xl flex items-center justify-center hover:bg-green-600 transition shadow-sm h-12" title="WhatsApp">
-                        <i class="fa-brands fa-whatsapp text-xl"></i>
+                    <button onclick="shareProductWhatsApp()" class="col-span-1 bg-green-500 text-white rounded-xl flex items-center justify-center hover:bg-green-600 transition shadow-sm h-14" title="WhatsApp">
+                        <i class="fa-brands fa-whatsapp text-2xl"></i>
                     </button>
-                    <button id="modal-add-btn" class="col-span-4 bg-fv-blue text-white rounded-xl font-bold text-lg hover:opacity-90 transition flex items-center justify-center gap-2 shadow-lg h-12">
-                        Agregar <i class="fa-solid fa-plus"></i>
+                    <button id="modal-add-btn" class="col-span-4 bg-fv-blue text-white rounded-xl font-bold text-lg hover:opacity-90 transition flex items-center justify-center gap-2 shadow-lg h-14">
+                        Agregar al Pedido <i class="fa-solid fa-cart-plus"></i>
                     </button>
                 </div>
             </div>
@@ -213,7 +220,6 @@
         let cart = [];
         let currentCategory = 'Ver Todo';
         let maxPriceAvailable = 0;
-        let currentModalProduct = null;
 
         function loadProducts() {
             Papa.parse(CSV_URL, {
@@ -240,12 +246,17 @@
                         let p100 = parsePrice(getVal('PRECIO 100')) || p50;
                         let p200 = parsePrice(getVal('PRECIO 200')) || p100;
 
+                        // PROCESAMIENTO DE IMÁGENES MÚLTIPLES
+                        // Separa por coma, limpia espacios y filtra vacíos
+                        const rawImg = getVal('IMAGEN');
+                        const images = rawImg ? rawImg.split(',').map(url => url.trim()).filter(url => url.length > 0) : ['https://placehold.co/800x800/EEEEEE/999999?text=Sin+Imagen'];
+
                         return { 
                             id: index, 
                             slug: nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
                             sku: getVal('SKU') || 'N/A',
                             nombre: nombre, 
-                            imagen: getVal('IMAGEN') || 'https://placehold.co/800x800/EEEEEE/999999?text=Sin+Imagen', 
+                            images: images, // Guardamos el array de imágenes
                             categoria: getVal('TIPO') || 'Otros',
                             prices: { p1, p12, p50, p100, p200 }
                         };
@@ -331,7 +342,7 @@
             grid.innerHTML = products.map((p) => `
                 <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 flex flex-col group cursor-pointer animate-fade-in" onclick="openProductModal(${p.id})">
                     <div class="relative aspect-square bg-white p-4">
-                        <img src="${p.imagen}" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" loading="lazy" alt="${p.nombre}">
+                        <img src="${p.images[0]}" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" loading="lazy" alt="${p.nombre}">
                         ${p.prices.p1 === 0 ? '<span class="absolute top-2 right-2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded-full font-bold uppercase">Cotizar</span>' : ''}
                     </div>
                     <div class="p-4 flex-grow flex flex-col justify-between bg-gradient-to-b from-white to-gray-50/50">
@@ -360,21 +371,35 @@
             applyFilters();
         }
 
-        // --- LÓGICA DEL MODAL Y PRECIOS ---
+        // --- LÓGICA DEL MODAL, GALERÍA Y PRECIOS ---
         function openProductModal(id) {
             const p = allProducts.find(prod => prod.id === id);
             if(!p) return;
-            currentModalProduct = p; // Guardar referencia para cálculos
+            
+            // Imagen principal inicial
+            const mainImg = document.getElementById('modal-img');
+            mainImg.src = p.images[0];
+            
+            // Generar Galería de Miniaturas
+            const galleryContainer = document.getElementById('modal-gallery');
+            if (p.images.length > 1) {
+                galleryContainer.innerHTML = p.images.map((img, i) => `
+                    <div class="w-16 h-16 border-2 border-gray-200 rounded-lg overflow-hidden cursor-pointer hover:border-orange-400 transition flex-shrink-0 ${i===0?'thumb-active':''}" onclick="changeMainImage('${img}', this)">
+                        <img src="${img}" class="w-full h-full object-cover">
+                    </div>
+                `).join('');
+                galleryContainer.classList.remove('hidden');
+            } else {
+                galleryContainer.innerHTML = '';
+                galleryContainer.classList.add('hidden');
+            }
 
-            document.getElementById('modal-img').src = p.imagen;
             document.getElementById('modal-category').innerText = p.categoria;
             document.getElementById('modal-title').innerText = p.nombre;
             document.getElementById('modal-sku').innerText = p.sku;
             
-            // Reiniciar input cantidad
             document.getElementById('modal-qty-input').value = 1;
 
-            // Llenar tabla de precios
             const formatP = (price) => price > 0 ? `$${price.toLocaleString()}` : 'Cotizar';
             document.getElementById('price-1').innerText = formatP(p.prices.p1);
             document.getElementById('price-12').innerText = formatP(p.prices.p12);
@@ -382,7 +407,7 @@
             document.getElementById('price-100').innerText = formatP(p.prices.p100);
             document.getElementById('price-200').innerText = formatP(p.prices.p200);
 
-            highlightActivePrice(); // Resaltar el precio de 1 unidad por defecto
+            highlightActivePrice();
 
             document.getElementById('modal-add-btn').onclick = () => { 
                 const qty = parseInt(document.getElementById('modal-qty-input').value) || 1;
@@ -400,6 +425,15 @@
             updateUrl(p.slug);
         }
 
+        // Cambiar imagen principal desde la galería
+        function changeMainImage(src, element) {
+            document.getElementById('modal-img').src = src;
+            // Actualizar estilo activo
+            const thumbs = document.querySelectorAll('#modal-gallery div');
+            thumbs.forEach(t => t.classList.remove('thumb-active'));
+            element.classList.add('thumb-active');
+        }
+
         function updateModalInput(change) {
             const input = document.getElementById('modal-qty-input');
             let val = parseInt(input.value) || 0;
@@ -412,12 +446,10 @@
         function highlightActivePrice() {
             const qty = parseInt(document.getElementById('modal-qty-input').value) || 1;
             
-            // Remover clases activas
             ['row-1', 'row-12', 'row-50', 'row-100', 'row-200'].forEach(id => {
                 document.getElementById(id).classList.remove('price-active');
             });
 
-            // Agregar clase activa según cantidad
             if (qty >= 200) document.getElementById('row-200').classList.add('price-active');
             else if (qty >= 100) document.getElementById('row-100').classList.add('price-active');
             else if (qty >= 50) document.getElementById('row-50').classList.add('price-active');
@@ -447,7 +479,7 @@
         function updateCartItemQty(index, newQty) {
             const qty = parseInt(newQty);
             if(qty < 1) {
-                cart[index].qty = 1; // Mínimo 1, si quiere borrar usa el botón basura
+                cart[index].qty = 1;
             } else {
                 cart[index].qty = qty;
             }
@@ -474,7 +506,7 @@
 
                     return `
                         <div class="flex gap-3 items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm transition-all hover:border-orange-200">
-                            <img src="${item.imagen}" class="w-16 h-16 object-contain bg-gray-50 rounded-lg border border-gray-50 p-1">
+                            <img src="${item.images[0]}" class="w-16 h-16 object-contain bg-gray-50 rounded-lg border border-gray-50 p-1">
                             <div class="flex-grow overflow-hidden">
                                 <p class="font-bold text-sm leading-tight truncate text-fv-blue">${item.nombre}</p>
                                 <p class="text-xs text-gray-500 mt-1 mb-2">SKU: ${item.sku}</p>
