@@ -15,13 +15,23 @@
         .text-fv-blue { color: #002e5f; }
         .bg-fv-blue { background-color: #002e5f; }
         .text-fv-orange { color: #e85d04; }
+        .bg-fv-orange { background-color: #e85d04; }
         .accent-fv { accent-color: #e85d04; }
         
+        /* Eliminar flechas del input number para diseño limpio */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         .modal-enter { animation: slideUp 0.3s ease-out forwards; }
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        /* Clase para resaltar la fila de precio activa */
+        .price-active { background-color: #e85d04; color: white !important; transform: scale(1.02); padding-left: 8px; padding-right: 8px; border-radius: 4px; font-weight: 900 !important; }
+        .price-active span { color: white !important; }
     </style>
 </head>
 <body class="min-h-screen relative text-gray-900">
@@ -117,29 +127,38 @@
                     <h2 id="modal-title" class="text-2xl font-black text-gray-900 leading-tight mt-1 mb-2">Nombre</h2>
                     <p class="text-gray-500 text-xs mb-4 font-mono bg-gray-50 inline-block px-2 py-1 rounded">SKU: <span id="modal-sku" class="font-bold text-gray-800"></span></p>
                     
-                    <div class="bg-gray-50 rounded-lg p-3 mb-4 border border-gray-100">
-                        <p class="text-xs font-bold text-gray-500 uppercase mb-2">Precios por Cantidad</p>
+                    <div class="bg-gray-50 rounded-lg p-3 mb-4 border border-gray-100 transition-all">
+                        <p class="text-xs font-bold text-gray-500 uppercase mb-2">Tabla de Precios (Unitario)</p>
                         <div class="grid grid-cols-2 gap-y-1 text-sm">
-                            <div class="flex justify-between border-b border-gray-200 pb-1">
-                                <span class="text-gray-600">1 unidad</span>
+                            <div id="row-1" class="flex justify-between border-b border-gray-200 pb-1 transition-all">
+                                <span class="text-gray-600">1+ und</span>
                                 <span id="price-1" class="font-bold text-gray-900"></span>
                             </div>
-                            <div class="flex justify-between border-b border-gray-200 pb-1">
-                                <span class="text-gray-600">12+ unidades</span>
+                            <div id="row-12" class="flex justify-between border-b border-gray-200 pb-1 transition-all">
+                                <span class="text-gray-600">12+ und</span>
                                 <span id="price-12" class="font-bold text-fv-blue"></span>
                             </div>
-                            <div class="flex justify-between border-b border-gray-200 pb-1">
-                                <span class="text-gray-600">50+ unidades</span>
+                            <div id="row-50" class="flex justify-between border-b border-gray-200 pb-1 transition-all">
+                                <span class="text-gray-600">50+ und</span>
                                 <span id="price-50" class="font-bold text-fv-blue"></span>
                             </div>
-                            <div class="flex justify-between border-b border-gray-200 pb-1">
-                                <span class="text-gray-600">100+ unidades</span>
+                            <div id="row-100" class="flex justify-between border-b border-gray-200 pb-1 transition-all">
+                                <span class="text-gray-600">100+ und</span>
                                 <span id="price-100" class="font-bold text-fv-blue"></span>
                             </div>
-                            <div class="flex justify-between text-orange-600">
-                                <span class="font-bold">200+ unidades</span>
-                                <span id="price-200" class="font-black"></span>
+                            <div id="row-200" class="flex justify-between transition-all">
+                                <span class="text-gray-600">200+ und</span>
+                                <span id="price-200" class="font-bold text-fv-blue"></span>
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Ingresa la Cantidad:</label>
+                        <div class="flex items-center border-2 border-fv-blue rounded-xl h-12 overflow-hidden w-full max-w-[200px]">
+                            <button onclick="updateModalInput(-1)" class="w-12 h-full bg-gray-50 hover:bg-gray-200 text-gray-600 font-bold text-xl active:scale-95 transition">-</button>
+                            <input type="number" id="modal-qty-input" value="1" min="1" class="w-full h-full text-center font-black text-xl border-none focus:ring-0 text-fv-blue" oninput="highlightActivePrice()">
+                            <button onclick="updateModalInput(1)" class="w-12 h-full bg-gray-50 hover:bg-gray-200 text-gray-600 font-bold text-xl active:scale-95 transition">+</button>
                         </div>
                     </div>
                 </div>
@@ -194,6 +213,7 @@
         let cart = [];
         let currentCategory = 'Ver Todo';
         let maxPriceAvailable = 0;
+        let currentModalProduct = null;
 
         function loadProducts() {
             Papa.parse(CSV_URL, {
@@ -209,15 +229,12 @@
                         const nombre = getVal('NOMBRE');
                         if (!nombre) return null;
                         
-                        // Función helper para limpiar precios
                         const parsePrice = (val) => {
                             if(!val) return 0;
                             return parseFloat(val.toString().replace(/[^0-9]/g, '')) || 0;
                         };
 
                         let p1 = parsePrice(getVal('PRECIO 1')) || parsePrice(getVal('PRECIO DE VENTA'));
-                        
-                        // Lógica de cascada: Si no hay precio de mayoreo, usa el anterior
                         let p12 = parsePrice(getVal('PRECIO 12')) || p1;
                         let p50 = parsePrice(getVal('PRECIO 50')) || p12;
                         let p100 = parsePrice(getVal('PRECIO 100')) || p50;
@@ -230,13 +247,7 @@
                             nombre: nombre, 
                             imagen: getVal('IMAGEN') || 'https://placehold.co/800x800/EEEEEE/999999?text=Sin+Imagen', 
                             categoria: getVal('TIPO') || 'Otros',
-                            prices: {
-                                p1: p1,
-                                p12: p12,
-                                p50: p50,
-                                p100: p100,
-                                p200: p200
-                            }
+                            prices: { p1, p12, p50, p100, p200 }
                         };
                     }).filter(p => p !== null);
 
@@ -253,7 +264,6 @@
             });
         }
 
-        // Helper para obtener precio actual según cantidad
         function getDynamicPrice(product, qty) {
             if (qty >= 200) return product.prices.p200;
             if (qty >= 100) return product.prices.p100;
@@ -350,14 +360,20 @@
             applyFilters();
         }
 
+        // --- LÓGICA DEL MODAL Y PRECIOS ---
         function openProductModal(id) {
             const p = allProducts.find(prod => prod.id === id);
             if(!p) return;
+            currentModalProduct = p; // Guardar referencia para cálculos
+
             document.getElementById('modal-img').src = p.imagen;
             document.getElementById('modal-category').innerText = p.categoria;
             document.getElementById('modal-title').innerText = p.nombre;
             document.getElementById('modal-sku').innerText = p.sku;
             
+            // Reiniciar input cantidad
+            document.getElementById('modal-qty-input').value = 1;
+
             // Llenar tabla de precios
             const formatP = (price) => price > 0 ? `$${price.toLocaleString()}` : 'Cotizar';
             document.getElementById('price-1').innerText = formatP(p.prices.p1);
@@ -366,7 +382,13 @@
             document.getElementById('price-100').innerText = formatP(p.prices.p100);
             document.getElementById('price-200').innerText = formatP(p.prices.p200);
 
-            document.getElementById('modal-add-btn').onclick = () => { addToCart(p.id); closeProductModal(); };
+            highlightActivePrice(); // Resaltar el precio de 1 unidad por defecto
+
+            document.getElementById('modal-add-btn').onclick = () => { 
+                const qty = parseInt(document.getElementById('modal-qty-input').value) || 1;
+                addToCart(p.id, qty); 
+                closeProductModal(); 
+            };
             
             const modal = document.getElementById('product-modal');
             modal.classList.remove('hidden');
@@ -378,6 +400,31 @@
             updateUrl(p.slug);
         }
 
+        function updateModalInput(change) {
+            const input = document.getElementById('modal-qty-input');
+            let val = parseInt(input.value) || 0;
+            val += change;
+            if(val < 1) val = 1;
+            input.value = val;
+            highlightActivePrice();
+        }
+
+        function highlightActivePrice() {
+            const qty = parseInt(document.getElementById('modal-qty-input').value) || 1;
+            
+            // Remover clases activas
+            ['row-1', 'row-12', 'row-50', 'row-100', 'row-200'].forEach(id => {
+                document.getElementById(id).classList.remove('price-active');
+            });
+
+            // Agregar clase activa según cantidad
+            if (qty >= 200) document.getElementById('row-200').classList.add('price-active');
+            else if (qty >= 100) document.getElementById('row-100').classList.add('price-active');
+            else if (qty >= 50) document.getElementById('row-50').classList.add('price-active');
+            else if (qty >= 12) document.getElementById('row-12').classList.add('price-active');
+            else document.getElementById('row-1').classList.add('price-active');
+        }
+
         function closeProductModal() {
             const modal = document.getElementById('product-modal');
             modal.classList.add('opacity-0');
@@ -386,15 +433,25 @@
             clearUrl();
         }
 
-        function addToCart(id) {
+        function addToCart(id, qty = 1) {
             const p = allProducts.find(prod => prod.id === id);
             const item = cart.find(i => i.id === id);
-            if (item) item.qty++; else cart.push({ ...p, qty: 1 });
+            if (item) item.qty += qty; else cart.push({ ...p, qty: qty });
             updateCartUI();
-            showToast("Producto agregado");
+            showToast("Agregado al pedido");
             const count = document.getElementById('cart-count');
             count.classList.add('scale-125', 'bg-orange-500');
             setTimeout(() => count.classList.remove('scale-125', 'bg-orange-500'), 200);
+        }
+
+        function updateCartItemQty(index, newQty) {
+            const qty = parseInt(newQty);
+            if(qty < 1) {
+                cart[index].qty = 1; // Mínimo 1, si quiere borrar usa el botón basura
+            } else {
+                cart[index].qty = qty;
+            }
+            updateCartUI();
         }
 
         function updateCartUI() {
@@ -407,7 +464,6 @@
                 container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 py-10"><i class="fa-solid fa-cart-shopping text-5xl opacity-30 mb-4"></i><p class="font-bold">Tu pedido está vacío</p><button onclick="toggleCart()" class="mt-4 text-fv-blue underline text-sm">Volver al catálogo</button></div>`;
             } else {
                 container.innerHTML = cart.map((item, i) => {
-                    // Calcular precio dinámico según cantidad actual
                     const currentPrice = getDynamicPrice(item, item.qty);
                     
                     if(currentPrice > 0) total += currentPrice * item.qty;
@@ -421,16 +477,19 @@
                             <img src="${item.imagen}" class="w-16 h-16 object-contain bg-gray-50 rounded-lg border border-gray-50 p-1">
                             <div class="flex-grow overflow-hidden">
                                 <p class="font-bold text-sm leading-tight truncate text-fv-blue">${item.nombre}</p>
-                                <p class="text-xs text-gray-500 mt-1">SKU: ${item.sku}</p>
-                                <div class="flex justify-between items-center mt-2">
-                                    <p class="text-xs font-semibold">${priceDisplay} x ${item.qty}</p>
-                                    <p class="font-bold text-sm text-fv-blue">${subtotalDisplay}</p>
+                                <p class="text-xs text-gray-500 mt-1 mb-2">SKU: ${item.sku}</p>
+                                
+                                <div class="flex justify-between items-end">
+                                    <div class="flex items-center border border-gray-300 rounded-lg h-8 w-24 overflow-hidden">
+                                        <input type="number" value="${item.qty}" min="1" class="w-full h-full text-center text-sm font-bold border-none focus:ring-0 p-0 text-gray-700" onchange="updateCartItemQty(${i}, this.value)">
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs text-gray-400">Unit: ${priceDisplay}</p>
+                                        <p class="font-bold text-sm text-fv-blue">${subtotalDisplay}</p>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="flex flex-col gap-1 ml-2">
-                                 <button onclick="addToCart(${item.id})" class="w-7 h-7 bg-gray-100 text-fv-blue rounded-full flex items-center justify-center hover:bg-fv-blue hover:text-white transition"><i class="fa-solid fa-plus text-xs"></i></button>
-                                <button onclick="removeFromCart(${i})" class="w-7 h-7 bg-red-50 text-red-500 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-minus text-xs"></i></button>
-                            </div>
+                            <button onclick="removeFromCart(${i})" class="w-8 h-8 text-red-400 hover:bg-red-50 rounded-full transition ml-2 self-center"><i class="fa-solid fa-trash-can"></i></button>
                         </div>`;
                 }).join('');
             }
@@ -440,11 +499,7 @@
         }
 
         function removeFromCart(i) { 
-            if(cart[i].qty > 1) {
-                cart[i].qty--;
-            } else {
-                cart.splice(i, 1); 
-            }
+            cart.splice(i, 1); 
             updateCartUI(); 
         }
         function toggleCart() { document.getElementById('cart-modal').classList.toggle('hidden'); }
@@ -459,11 +514,11 @@
 
             cart.forEach(i => { 
                 const currentPrice = getDynamicPrice(i, i.qty);
-                const priceStr = currentPrice > 0 ? `$${(currentPrice * i.qty).toLocaleString()}` : 'A Cotizar';
                 const unitPriceStr = currentPrice > 0 ? `$${currentPrice.toLocaleString()}` : 'Cotizar';
+                const totalStr = currentPrice > 0 ? `$${(currentPrice * i.qty).toLocaleString()}` : 'A Cotizar';
                 
                 msg += `📦 *${i.nombre}*%0A`;
-                msg += `   └ Cant: ${i.qty} | Unit: ${unitPriceStr} | SKU: ${i.sku}%0A`;
+                msg += `   └ Cant: ${i.qty} | Unit: ${unitPriceStr} | Total: ${totalStr}%0A`;
                 
                 if(currentPrice > 0) total += currentPrice * i.qty;
                 else quoteItems.push(i.nombre);
