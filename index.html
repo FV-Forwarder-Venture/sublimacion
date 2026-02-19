@@ -3,54 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Forwarder Venture - Sublimación</title>
+    <title>Catálogo Sublimación - Forwarder Venture</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
-        body { background-color: #F8FAFC; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #F3F4F6; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         
+        /* Colores Forwarder Venture */
         .text-fv-blue { color: #002e5f; }
         .bg-fv-blue { background-color: #002e5f; }
+        .text-fv-orange { color: #e85d04; }
         .bg-fv-orange { background-color: #e85d04; }
+        .accent-fv { accent-color: #e85d04; }
         
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Estilo de botones de variantes (Pills) - Diseño original limpio */
-        .variant-pill {
+        .modal-enter { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .price-active { background-color: #e85d04; color: white !important; transform: scale(1.02); padding-left: 8px; padding-right: 8px; border-radius: 4px; font-weight: 900 !important; }
+        .price-active span { color: white !important; }
+
+        /* Estilo para las pastillas de variantes (Colores/Tamaños) */
+        .variant-btn {
             border: 1px solid #e2e8f0;
-            padding: 10px 16px;
+            padding: 8px 16px;
             border-radius: 6px;
             font-size: 12px;
-            font-weight: 800;
+            font-weight: 700;
             text-transform: uppercase;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
             background: white;
+            color: #4b5563;
             cursor: pointer;
-            color: #64748b;
         }
-        .variant-pill:hover { border-color: #002e5f; background: #f8fafc; color: #002e5f; }
-        .variant-pill.active {
+        .variant-btn:hover { border-color: #002e5f; background-color: #f9fafb; }
+        .variant-btn.active {
             border-color: #002e5f;
-            background: #002e5f;
+            background-color: #002e5f;
             color: white;
-            transform: scale(1.05);
-            box-shadow: 0 4px 6px -1px rgba(0, 46, 95, 0.2);
         }
-
-        .price-highlight { background-color: #e85d04; color: white !important; border-radius: 4px; padding: 2px 8px; font-weight: 900; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen relative text-gray-900">
 
-    <div class="max-w-[1440px] mx-auto bg-white min-h-screen shadow-xl flex flex-col w-full">
-        <header class="bg-white/95 backdrop-blur-md px-6 py-4 sticky top-0 z-50 flex justify-between items-center border-b h-[80px]">
-            <img src="logo.png" alt="Forwarder Venture" class="h-10 md:h-12 object-contain">
-            <button onclick="toggleCart()" class="relative p-3 hover:bg-gray-100 rounded-full transition group">
-                <i class="fa-solid fa-cart-shopping text-2xl text-fv-blue group-hover:scale-110 transition"></i>
-                <span id="cart-count" class="absolute top-1 right-1 bg-orange-600 text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm transform scale-0 transition-transform duration-300">0</span>
+    <div class="max-w-[1400px] mx-auto bg-white min-h-screen shadow-2xl relative flex flex-col">
+
+        <header class="bg-white/95 backdrop-blur-md px-5 py-3 sticky top-0 z-50 flex justify-between items-center border-b border-gray-100 shadow-sm h-[80px]">
+            <div class="flex items-center">
+                <img src="logo.png" alt="Forwarder Venture" class="w-[120px] object-contain">
+            </div>
+            <button onclick="toggleCart()" class="relative p-2 active:scale-95 transition-transform hover:bg-gray-100 rounded-full">
+                <i class="fa-solid fa-cart-shopping text-2xl text-fv-blue"></i>
+                <span id="cart-count" class="absolute top-0 right-0 bg-orange-600 text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-white">0</span>
             </button>
         </header>
 
@@ -64,93 +76,166 @@
             </div>
         </section>
 
-        <div class="sticky top-[80px] z-40 bg-white border-b shadow-sm">
-            <nav id="category-nav" class="flex overflow-x-auto gap-3 px-6 py-4 hide-scrollbar"></nav>
+        <div class="sticky top-[80px] z-40 bg-white shadow-sm border-b border-gray-200">
+            <nav id="category-nav" class="flex overflow-x-auto gap-3 px-5 py-4 hide-scrollbar"></nav>
+            <div class="px-5 py-3 bg-gray-50/80 backdrop-blur-sm flex flex-col md:flex-row gap-4 justify-between items-center text-sm">
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                    <i class="fa-solid fa-arrow-up-wide-short text-gray-400"></i>
+                    <select id="sort-select" onchange="applyFilters()" class="bg-white border border-gray-300 text-gray-700 text-xs rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2 outline-none">
+                        <option value="default">Relevancia</option>
+                        <option value="asc">Precio: Menor a Mayor</option>
+                        <option value="desc">Precio: Mayor a Menor</option>
+                        <option value="alpha">Nombre: A - Z</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <span class="text-xs font-bold text-gray-500 whitespace-nowrap"><i class="fa-solid fa-filter-circle-dollar mr-1"></i>Máx:</span>
+                    <input type="range" id="price-range" min="0" max="100000" step="1000" class="w-full accent-fv h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" oninput="updatePriceLabel(this.value); applyFilters()">
+                    <span id="price-label" class="text-xs font-black text-fv-blue min-w-[70px] text-right bg-white px-2 py-1 rounded border border-gray-100">$100.000</span>
+                </div>
+            </div>
         </div>
 
-        <main class="p-6 md:p-10 bg-gray-50 flex-grow">
-            <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
+        <main class="p-4 md:p-10 bg-gray-50 pb-20 flex-grow">
+            <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-8">
+                <div class="col-span-full flex flex-col items-center justify-center py-32 text-gray-400">
+                    <i class="fa-solid fa-circle-notch fa-spin text-4xl mb-4 text-fv-blue"></i>
+                    <p class="text-base font-bold uppercase tracking-widest">Cargando inventario...</p>
+                </div>
+            </div>
         </main>
 
         <footer class="bg-gray-900 text-white py-12 border-t-4 border-orange-600 mt-auto">
             <div class="flex flex-col items-center justify-center text-center px-6">
                 <h3 class="font-black text-2xl tracking-tighter uppercase mb-2">FORWARDER VENTURE</h3>
-                <p class="text-gray-400 text-xs mb-6 tracking-widest uppercase">Sublimación & Diseño Personalizado</p>
+                <p class="text-gray-400 text-xs mb-8 tracking-widest uppercase">Sublimación & Diseño Personalizado</p>
                 
-                <div class="bg-gray-800 px-6 py-2 rounded-full mb-8 border border-gray-700">
-                    <p class="text-orange-400 font-bold text-xs uppercase tracking-wide">
-                        <i class="fa-solid fa-circle-info mr-2"></i>Todos los precios son antes de IVA
-                    </p>
-                </div>
-
                 <div class="flex gap-6 mb-8">
-                    <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-green-500 hover:text-white transition"><i class="fa-brands fa-whatsapp"></i></a>
-                    <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-pink-600 hover:text-white transition"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://wa.me/573114957971" target="_blank" class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white text-xl hover:scale-110 transition shadow-lg hover:shadow-green-500/30">
+                        <i class="fa-brands fa-whatsapp"></i>
+                    </a>
+                    <a href="https://facebook.com" target="_blank" class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl hover:scale-110 transition shadow-lg hover:shadow-blue-600/30">
+                        <i class="fa-brands fa-facebook-f"></i>
+                    </a>
+                    <a href="#" class="w-12 h-12 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xl hover:scale-110 transition shadow-lg hover:shadow-pink-500/30 opacity-80 hover:opacity-100" title="Instagram (Próximamente)">
+                        <i class="fa-brands fa-instagram"></i>
+                    </a>
                 </div>
                 
-                <p class="text-gray-600 text-[10px]">&copy; 2026 Forwarder Venture. Todos los derechos reservados.</p>
+                <div class="w-24 h-0.5 bg-gray-800 mb-6"></div>
+                
+                <p class="text-orange-500 font-bold text-xs uppercase tracking-widest mb-4">
+                    * Todos los precios mostrados son ANTES DE IVA
+                </p>
+
+                <p class="text-gray-500 text-xs">
+                    &copy; 2026 Forwarder Venture.<br>Todos los derechos reservados.
+                </p>
             </div>
         </footer>
+
     </div>
 
-    <div id="product-modal" class="hidden fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-4 backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="bg-white w-full max-w-5xl rounded-3xl overflow-hidden shadow-2xl relative flex flex-col md:flex-row max-h-[92vh]">
-            <button onclick="closeModal()" class="absolute top-5 right-5 w-10 h-10 bg-white shadow-lg rounded-full z-10 flex items-center justify-center text-gray-700 hover:bg-gray-100 transition"><i class="fa-solid fa-xmark"></i></button>
+    <div id="product-modal" class="hidden fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0">
+        <div class="bg-white w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl relative transform transition-all scale-95 flex flex-col md:flex-row max-h-[90vh] md:h-auto" id="product-modal-content">
+            <button onclick="closeProductModal()" class="absolute top-4 right-4 w-10 h-10 bg-black/10 hover:bg-black/20 rounded-full flex items-center justify-center z-10 transition">
+                <i class="fa-solid fa-xmark text-xl text-gray-800"></i>
+            </button>
             
-            <div class="w-full md:w-1/2 bg-gray-50 p-8 flex items-center justify-center border-b md:border-b-0 md:border-r">
-                <img id="modal-img" src="" class="w-full h-auto max-h-[450px] object-contain drop-shadow-xl transition-all duration-300">
+            <div class="w-full md:w-1/2 bg-gray-50 p-6 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200">
+                <div class="w-full aspect-square flex items-center justify-center mb-4 bg-white rounded-xl shadow-sm border border-gray-100 p-2">
+                    <img id="modal-img" src="" class="w-full h-full object-contain max-h-[350px]">
+                </div>
+                <div id="modal-gallery" class="flex gap-2 overflow-x-auto w-full px-1 py-2 hide-scrollbar justify-center"></div>
             </div>
             
-            <div class="w-full md:w-1/2 p-8 md:p-12 overflow-y-auto flex flex-col bg-white">
-                <span id="modal-tag" class="text-orange-600 font-black text-xs uppercase tracking-widest mb-2 block">CATEGORÍA</span>
-                <h2 id="modal-title" class="text-3xl font-black text-gray-900 leading-tight mb-4">Título</h2>
-                <span class="text-gray-400 text-xs font-mono bg-gray-50 px-3 py-1 rounded-lg border border-gray-100 w-fit mb-8">SKU: <b id="modal-sku" class="text-gray-700"></b></span>
+            <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col justify-between overflow-y-auto">
+                <div>
+                    <span id="modal-category" class="text-xs font-black text-orange-600 uppercase tracking-widest">CATEGORÍA</span>
+                    <h2 id="modal-title" class="text-2xl md:text-3xl font-black text-gray-900 leading-tight mt-1 mb-2">Nombre</h2>
+                    <p class="text-gray-500 text-xs mb-4 font-mono bg-gray-50 inline-block px-2 py-1 rounded">SKU: <span id="modal-sku" class="font-bold text-gray-800"></span></p>
+                    
+                    <div id="variant-section" class="mb-6 hidden">
+                        <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Opciones:</label>
+                        <div id="variant-container" class="flex flex-wrap gap-2"></div>
+                    </div>
 
-                <div id="variant-section" class="mb-8">
-                    <label class="text-[10px] font-black text-gray-400 uppercase mb-3 block tracking-wide">Selecciona una opción:</label>
-                    <div id="variant-pills" class="flex flex-wrap gap-2"></div>
-                </div>
+                    <div class="bg-white rounded-xl p-4 mb-6 border border-gray-200 shadow-sm">
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-tags text-orange-500"></i> Descuentos por Volumen
+                        </p>
+                        <div class="grid grid-cols-2 gap-y-2 text-sm">
+                            <div id="row-1" class="flex justify-between border-b border-gray-100 pb-1 transition-all">
+                                <span class="text-gray-600">1+ und</span>
+                                <span id="price-1" class="font-bold text-gray-900"></span>
+                            </div>
+                            <div id="row-12" class="flex justify-between border-b border-gray-100 pb-1 transition-all">
+                                <span class="text-gray-600">12+ und</span>
+                                <span id="price-12" class="font-bold text-fv-blue"></span>
+                            </div>
+                            <div id="row-50" class="flex justify-between border-b border-gray-100 pb-1 transition-all">
+                                <span class="text-gray-600">50+ und</span>
+                                <span id="price-50" class="font-bold text-fv-blue"></span>
+                            </div>
+                            <div id="row-100" class="flex justify-between border-b border-gray-100 pb-1 transition-all">
+                                <span class="text-gray-600">100+ und</span>
+                                <span id="price-100" class="font-bold text-fv-blue"></span>
+                            </div>
+                            <div id="row-200" class="flex justify-between transition-all">
+                                <span class="text-gray-600">200+ und</span>
+                                <span id="price-200" class="font-bold text-fv-blue"></span>
+                            </div>
+                        </div>
+                    </div>
 
-                <div class="bg-gray-50 rounded-2xl p-6 mb-8 border border-gray-100">
-                    <div class="grid grid-cols-2 gap-y-3 text-sm">
-                        <div id="row-1" class="flex justify-between border-b border-gray-200 pb-2"><span>1+ unidades</span><span id="price-1" class="font-black text-fv-blue"></span></div>
-                        <div id="row-12" class="flex justify-between border-b border-gray-200 pb-2"><span>12+ unidades</span><span id="price-12" class="font-black text-fv-blue"></span></div>
-                        <div id="row-50" class="flex justify-between border-b border-gray-200 pb-2"><span>50+ unidades</span><span id="price-50" class="font-black text-fv-blue"></span></div>
-                        <div id="row-100" class="flex justify-between border-b border-gray-200 pb-2"><span>100+ unidades</span><span id="price-100" class="font-black text-fv-blue"></span></div>
-                        <div id="row-200" class="flex justify-between"><span>200+ unidades</span><span id="price-200" class="font-black text-fv-blue"></span></div>
+                    <div class="mb-6">
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Ingresa la Cantidad:</label>
+                        <div class="flex items-center border-2 border-fv-blue rounded-xl h-14 overflow-hidden w-full max-w-[200px] shadow-sm">
+                            <button onclick="updateModalInput(-1)" class="w-14 h-full bg-gray-50 hover:bg-gray-200 text-gray-600 font-bold text-2xl active:scale-95 transition">-</button>
+                            <input type="number" id="modal-qty-input" value="1" min="1" class="w-full h-full text-center font-black text-2xl border-none focus:ring-0 text-fv-blue bg-white" oninput="highlightActivePrice()">
+                            <button onclick="updateModalInput(1)" class="w-14 h-full bg-gray-50 hover:bg-gray-200 text-gray-600 font-bold text-2xl active:scale-95 transition">+</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mt-auto flex gap-4">
-                    <div class="flex items-center border-2 border-fv-blue rounded-xl h-14 overflow-hidden bg-white w-36 shadow-sm">
-                        <button onclick="adjQty(-1)" class="w-12 h-full hover:bg-gray-50 font-bold text-gray-500 text-xl transition">-</button>
-                        <input type="number" id="modal-qty" value="1" min="1" class="w-full text-center font-black text-xl border-none focus:ring-0 text-fv-blue">
-                        <button onclick="adjQty(1)" class="w-12 h-full hover:bg-gray-50 font-bold text-gray-500 text-xl transition">+</button>
-                    </div>
-                    <button id="add-btn" class="flex-grow bg-fv-blue text-white h-14 rounded-xl font-black text-lg hover:bg-[#003d80] transition shadow-lg shadow-blue-900/20 active:scale-95">AGREGAR <i class="fa-solid fa-cart-plus ml-2"></i></button>
+                <div class="grid grid-cols-6 gap-2 mt-auto">
+                    <button onclick="shareProduct()" class="col-span-1 bg-gray-100 text-gray-600 rounded-xl flex items-center justify-center hover:bg-gray-200 transition h-14" title="Copiar Enlace">
+                        <i class="fa-solid fa-link text-xl"></i>
+                    </button>
+                    <button onclick="shareProductWhatsApp()" class="col-span-1 bg-green-500 text-white rounded-xl flex items-center justify-center hover:bg-green-600 transition shadow-sm h-14" title="WhatsApp">
+                        <i class="fa-brands fa-whatsapp text-2xl"></i>
+                    </button>
+                    <button id="modal-add-btn" class="col-span-4 bg-fv-blue text-white rounded-xl font-bold text-lg hover:opacity-90 transition flex items-center justify-center gap-2 shadow-lg h-14">
+                        Agregar al Pedido <i class="fa-solid fa-cart-plus"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="cart-panel" class="hidden fixed inset-0 bg-black/60 z-[3000] flex justify-end backdrop-blur-sm transition-opacity">
-        <div class="bg-white w-full md:max-w-md h-full flex flex-col shadow-2xl animate-slide-in">
-            <div class="p-6 border-b flex justify-between items-center bg-white">
-                <h2 class="text-2xl font-black text-fv-blue">Mi Pedido</h2>
-                <button onclick="toggleCart()" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition"><i class="fa-solid fa-xmark text-xl text-gray-500"></i></button>
+    <div id="cart-modal" class="hidden fixed inset-0 bg-black/60 z-[3000] flex items-end md:items-center justify-center transition-opacity backdrop-blur-sm p-0 md:p-6">
+        <div class="bg-white w-full md:max-w-xl h-[85vh] md:h-[80vh] rounded-t-3xl md:rounded-3xl flex flex-col overflow-hidden shadow-2xl relative animate-slide-up">
+            <div class="px-6 py-5 flex justify-between items-center border-b border-gray-100 bg-white">
+                <h2 class="text-xl md:text-2xl font-black text-fv-blue">Tu Pedido</h2>
+                <button onclick="toggleCart()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-            <div id="cart-list" class="flex-grow overflow-y-auto p-6 space-y-4 bg-gray-50"></div>
-            <div class="p-6 bg-white border-t border-gray-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] space-y-4">
-                <div class="flex justify-between items-end">
-                    <span class="text-gray-400 font-bold text-xs uppercase tracking-wide">Total Estimado</span>
+            <div id="cart-items" class="flex-grow p-5 md:p-8 overflow-y-auto space-y-4 bg-gray-50"></div>
+            <div class="p-6 md:p-8 bg-white border-t border-gray-100">
+                <div class="flex justify-between items-center mb-6">
+                    <span class="text-gray-500 font-semibold uppercase text-sm">Total Estimado:</span>
                     <span id="cart-total" class="text-3xl font-black text-fv-blue">$0</span>
                 </div>
-                <button onclick="checkout()" class="w-full bg-[#25D366] text-white py-4 rounded-2xl font-black text-lg flex justify-center items-center gap-2 hover:bg-[#20bd5a] transition shadow-lg shadow-green-500/20 active:scale-95">
-                    <i class="fa-brands fa-whatsapp text-2xl"></i> ENVIAR PEDIDO
+                <button onclick="sendToWhatsApp()" class="w-full bg-[#25D366] text-white py-4 rounded-2xl font-black text-lg flex justify-center items-center gap-3 shadow-lg hover:bg-[#128C7E] transition">
+                    <i class="fa-brands fa-whatsapp text-2xl"></i> Enviar Pedido
                 </button>
             </div>
         </div>
+    </div>
+
+    <div id="toast" class="fixed top-24 left-1/2 transform -translate-x-1/2 bg-fv-blue text-white px-6 py-3 rounded-full shadow-2xl z-[4000] transition-all duration-300 opacity-0 translate-y-[-20px] pointer-events-none flex items-center gap-3 font-bold">
+        <i class="fa-solid fa-check-circle text-orange-400 text-xl"></i> <span id="toast-msg">Mensaje</span>
     </div>
 
     <script>
@@ -159,195 +244,402 @@
         const GID = '129591070';
         const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
-        let catalog = [];
+        let allProducts = [];
         let cart = [];
-        let activeCat = 'Ver Todo';
-        let currentProd = null;
-        let currentVar = null;
+        let currentCategory = 'Ver Todo';
+        let maxPriceAvailable = 0;
+        
+        let selectedProduct = null;
+        let selectedVariant = null;
 
-        function init() {
+        // Función auxiliar para forzar el formato en miles con punto (Colombia)
+        function formatMoney(amount) {
+            return amount.toLocaleString('es-CO');
+        }
+
+        function loadProducts() {
             Papa.parse(CSV_URL, {
                 download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
-                    const groups = {};
-                    results.data.forEach(row => {
+                    const tempGroups = {};
+
+                    results.data.forEach((row) => {
                         const pSku = row['PARENT SKU']?.trim();
                         const sku = row['SKU']?.trim();
                         if(!sku) return;
 
                         const groupID = (pSku && pSku !== "") ? pSku : sku;
 
-                        if (!groups[groupID]) {
-                            groups[groupID] = {
+                        if (!tempGroups[groupID]) {
+                            tempGroups[groupID] = {
                                 id: groupID,
+                                slug: row['NOMBRE']?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
                                 nombre: row['NOMBRE'],
-                                tipo: row['TIPO'] || 'General',
+                                categoria: row['TIPO'] || 'Otros',
                                 variaciones: []
                             };
                         }
 
-                        const cleanP = (v) => parseFloat(v?.toString().replace(/[^0-9.]/g, '')) || 0;
+                        const parsePrice = (v) => parseFloat(v?.toString().replace(/[^0-9]/g, '')) || 0;
                         
-                        groups[groupID].variaciones.push({
+                        tempGroups[groupID].variaciones.push({
                             sku: sku,
                             color: row['COLOR']?.trim() || '',
                             variable: row['VARIABLE']?.trim() || '',
-                            img: row['IMAGEN']?.split(',')[0].trim() || 'https://placehold.co/400x400?text=Sin+Imagen',
+                            img: row['IMAGEN']?.split(',')[0].trim() || 'https://placehold.co/800x800/EEEEEE/999999?text=Sin+Imagen',
                             prices: {
-                                p1: cleanP(row['PRECIO 1']),
-                                p12: cleanP(row['PRECIO 12']) || cleanP(row['PRECIO 1']),
-                                p50: cleanP(row['PRECIO 50']) || cleanP(row['PRECIO 1']),
-                                p100: cleanP(row['PRECIO 100']) || cleanP(row['PRECIO 1']),
-                                p200: cleanP(row['PRECIO 200']) || cleanP(row['PRECIO 1'])
+                                p1: parsePrice(row['PRECIO 1']),
+                                p12: parsePrice(row['PRECIO 12']) || parsePrice(row['PRECIO 1']),
+                                p50: parsePrice(row['PRECIO 50']) || parsePrice(row['PRECIO 1']),
+                                p100: parsePrice(row['PRECIO 100']) || parsePrice(row['PRECIO 1']),
+                                p200: parsePrice(row['PRECIO 200']) || parsePrice(row['PRECIO 1'])
                             }
                         });
                     });
-                    catalog = Object.values(groups);
-                    renderUI();
-                }
+
+                    allProducts = Object.values(tempGroups);
+
+                    if(allProducts.length > 0) {
+                        maxPriceAvailable = Math.max(...allProducts.map(p => p.variaciones[0].prices.p1));
+                        if(maxPriceAvailable === 0) maxPriceAvailable = 100000;
+                        setupFilters(maxPriceAvailable);
+                        initApp();
+                    } else {
+                        document.getElementById('product-grid').innerHTML = '<div class="col-span-full text-center py-20 text-gray-500"><i class="fa-solid fa-box-open text-4xl mb-3 opacity-50"></i><p class="font-bold">No se encontraron productos.</p></div>';
+                    }
+                },
+                error: (err) => console.error("Error CSV:", err)
             });
         }
 
-        function renderUI() {
-            const nav = document.getElementById('category-nav');
-            const cats = ['Ver Todo', ...new Set(catalog.map(p => p.tipo))];
-            nav.innerHTML = cats.map(c => `
-                <button onclick="filter('${c}')" class="px-6 py-2 rounded-full border border-transparent font-bold whitespace-nowrap transition-all duration-300 ${activeCat === c ? 'bg-fv-blue text-white shadow-md' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}">${c}</button>
-            `).join('');
+        function getDynamicPrice(prices, qty) {
+            if (qty >= 200) return prices.p200;
+            if (qty >= 100) return prices.p100;
+            if (qty >= 50) return prices.p50;
+            if (qty >= 12) return prices.p12;
+            return prices.p1;
+        }
 
+        function setupFilters(maxPrice) {
+            const range = document.getElementById('price-range');
+            const limit = Math.max(Math.ceil(maxPrice * 1.1), 50000);
+            range.max = limit;
+            range.value = limit;
+            updatePriceLabel(limit);
+        }
+
+        function updatePriceLabel(val) {
+            document.getElementById('price-label').innerText = '$' + formatMoney(parseInt(val));
+        }
+
+        function applyFilters() {
+            const sortValue = document.getElementById('sort-select').value;
+            let maxPriceInput = parseInt(document.getElementById('price-range').value);
+            if(isNaN(maxPriceInput)) maxPriceInput = maxPriceAvailable;
+
+            let filtered = allProducts.filter(p => {
+                const matchCat = currentCategory === 'Ver Todo' || p.categoria === currentCategory;
+                const matchPrice = p.variaciones[0].prices.p1 <= maxPriceInput;
+                return matchCat && matchPrice;
+            });
+
+            if (sortValue === 'asc') filtered.sort((a, b) => a.variaciones[0].prices.p1 - b.variaciones[0].prices.p1);
+            else if (sortValue === 'desc') filtered.sort((a, b) => b.variaciones[0].prices.p1 - a.variaciones[0].prices.p1);
+            else if (sortValue === 'alpha') filtered.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+            renderProducts(filtered);
+        }
+
+        function initApp() {
+            updateCategoryNav();
+            applyFilters();
+            checkUrlForProduct(); 
+        }
+
+        function updateCategoryNav() {
+            const uniqueCats = [...new Set(allProducts.map(p => p.categoria).filter(c => c && c.trim() !== ''))];
+            const categories = ['Ver Todo', ...uniqueCats.sort()];
+            document.getElementById('category-nav').innerHTML = categories.map(cat => {
+                const isActive = cat === currentCategory;
+                const activeClasses = isActive ? "bg-fv-blue text-white border-fv-blue shadow-md" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300";
+                return `<button onclick="filterCategory('${cat}')" class="px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap border transition-all ${activeClasses}">${cat}</button>`;
+            }).join('');
+        }
+
+        function filterCategory(cat) { 
+            currentCategory = cat; 
+            updateCategoryNav();
+            applyFilters();
+        }
+
+        function renderProducts(products) {
             const grid = document.getElementById('product-grid');
-            const items = activeCat === 'Ver Todo' ? catalog : catalog.filter(p => p.tipo === activeCat);
-            grid.innerHTML = items.map(p => `
-                <div class="bg-white rounded-2xl border border-gray-100 p-4 cursor-pointer hover:shadow-xl hover:border-orange-100 transition-all duration-300 group" onclick="openProduct('${p.id}')">
-                    <div class="aspect-square mb-4 bg-gray-50/50 rounded-xl flex items-center justify-center p-2 group-hover:bg-white transition">
-                        <img src="${p.variaciones[0].img}" class="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500">
+            if (products.length === 0) return grid.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center py-20 text-gray-400"><i class="fa-solid fa-filter-circle-xmark text-5xl mb-3 text-gray-300"></i><p class="font-bold">No hay productos que coincidan.</p><button onclick="resetFilters()" class="mt-4 text-fv-blue underline text-sm">Restablecer filtros</button></div>`;
+            
+            grid.innerHTML = products.map((p) => {
+                const mainVar = p.variaciones[0];
+                return `
+                <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 flex flex-col group cursor-pointer animate-fade-in" onclick="openProductModal('${p.id}')">
+                    <div class="relative aspect-square bg-white p-4">
+                        <img src="${mainVar.img}" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" loading="lazy" alt="${p.nombre}">
+                        ${mainVar.prices.p1 === 0 ? '<span class="absolute top-2 right-2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded-full font-bold uppercase">Cotizar</span>' : ''}
                     </div>
-                    <p class="text-[9px] font-black text-orange-500 uppercase tracking-widest mb-2">${p.tipo}</p>
-                    <h3 class="font-bold text-sm h-10 overflow-hidden mb-2 text-gray-800 leading-tight group-hover:text-fv-blue transition-colors">${p.nombre}</h3>
-                    <div class="flex justify-between items-center border-t border-gray-50 pt-3">
-                        <span class="text-fv-blue font-black text-lg">$${p.variaciones[0].prices.p1.toLocaleString()}</span>
-                        <div class="w-8 h-8 bg-gray-50 text-fv-blue rounded-full flex items-center justify-center group-hover:bg-fv-blue group-hover:text-white transition shadow-sm"><i class="fa-solid fa-plus text-xs"></i></div>
+                    <div class="p-4 flex-grow flex flex-col justify-between bg-gradient-to-b from-white to-gray-50/50">
+                        <div>
+                            <p class="text-[10px] text-orange-600 uppercase tracking-widest font-black mb-1 truncate">${p.categoria}</p>
+                            <h3 class="font-bold text-sm text-gray-900 leading-tight line-clamp-2 group-hover:text-fv-blue transition-colors">${p.nombre}</h3>
+                        </div>
+                        <div class="mt-3 flex justify-between items-end">
+                            <span class="text-fv-blue font-black text-lg">${mainVar.prices.p1 > 0 ? '$' + formatMoney(mainVar.prices.p1) : 'Cotizar'}</span>
+                            <div class="w-9 h-9 bg-fv-blue text-white rounded-full flex items-center justify-center shadow-md group-hover:bg-orange-600 group-hover:shadow-lg transition-all">
+                                <i class="fa-solid fa-plus text-sm"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
-        function openProduct(id) {
-            currentProd = catalog.find(p => p.id === id);
-            currentVar = currentProd.variaciones[0];
-            document.getElementById('modal-title').innerText = currentProd.nombre;
-            document.getElementById('modal-tag').innerText = currentProd.tipo;
-            
-            const pillBox = document.getElementById('variant-pills');
-            if (currentProd.variaciones.length > 1) {
-                document.getElementById('variant-section').classList.remove('hidden');
-                pillBox.innerHTML = currentProd.variaciones.map((v, i) => `
-                    <button class="variant-pill ${i === 0 ? 'active' : ''}" onclick="setVar(${i}, this)">${v.color || v.variable || 'Opción ' + (i+1)}</button>
-                `).join('');
-            } else { document.getElementById('variant-section').classList.add('hidden'); }
+        function resetFilters() {
+            currentCategory = 'Ver Todo';
+            document.getElementById('sort-select').value = 'default';
+            const range = document.getElementById('price-range');
+            range.value = range.max;
+            updatePriceLabel(range.max);
+            updateCategoryNav();
+            applyFilters();
+        }
 
-            refreshModal();
-            document.getElementById('product-modal').classList.remove('hidden');
-            setTimeout(() => document.getElementById('product-modal').classList.add('opacity-100'), 10);
+        function openProductModal(id) {
+            selectedProduct = allProducts.find(prod => prod.id === id);
+            if(!selectedProduct) return;
+            selectedVariant = selectedProduct.variaciones[0];
+
+            document.getElementById('modal-category').innerText = selectedProduct.categoria;
+            document.getElementById('modal-title').innerText = selectedProduct.nombre;
             
-            document.getElementById('add-btn').onclick = () => {
-                const qty = parseInt(document.getElementById('modal-qty').value);
-                const exists = cart.find(i => i.sku === currentVar.sku);
-                if(exists) exists.qty += qty;
-                else cart.push({ ...currentVar, nombre: currentProd.nombre, qty: qty });
-                updateCart(); closeModal();
+            const variantContainer = document.getElementById('variant-container');
+            const variantSection = document.getElementById('variant-section');
+            
+            if (selectedProduct.variaciones.length > 1) {
+                variantSection.classList.remove('hidden');
+                variantContainer.innerHTML = selectedProduct.variaciones.map((v, i) => {
+                    const label = v.color || v.variable || `Opción ${i+1}`;
+                    return `<button class="variant-btn ${i === 0 ? 'active' : ''}" onclick="selectVariant(${i}, this)">${label}</button>`;
+                }).join('');
+            } else {
+                variantSection.classList.add('hidden');
+            }
+
+            updateModalUI();
+
+            document.getElementById('modal-add-btn').onclick = () => { 
+                const qty = parseInt(document.getElementById('modal-qty-input').value) || 1;
+                addToCart(qty); 
+                closeProductModal(); 
             };
+            
+            const modal = document.getElementById('product-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                document.getElementById('product-modal-content').classList.remove('scale-95');
+                document.getElementById('product-modal-content').classList.add('scale-100');
+            }, 10);
+            updateUrl(selectedProduct.slug);
         }
 
-        function setVar(idx, btn) {
-            currentVar = currentProd.variaciones[idx];
-            document.querySelectorAll('.variant-pill').forEach(b => b.classList.remove('active'));
+        function selectVariant(index, btn) {
+            selectedVariant = selectedProduct.variaciones[index];
+            document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            refreshModal();
+            updateModalUI();
         }
 
-        function refreshModal() {
-            document.getElementById('modal-img').src = currentVar.img;
-            document.getElementById('modal-sku').innerText = currentVar.sku;
-            const p = currentVar.prices;
-            document.getElementById('price-1').innerText = `$${p.p1.toLocaleString()}`;
-            document.getElementById('price-12').innerText = `$${p.p12.toLocaleString()}`;
-            document.getElementById('price-50').innerText = `$${p.p50.toLocaleString()}`;
-            document.getElementById('price-100').innerText = `$${p.p100.toLocaleString()}`;
-            document.getElementById('price-200').innerText = `$${p.p200.toLocaleString()}`;
-            document.getElementById('modal-qty').value = 1;
+        function updateModalUI() {
+            document.getElementById('modal-img').src = selectedVariant.img;
+            document.getElementById('modal-sku').innerText = selectedVariant.sku;
+            
+            const formatP = (price) => price > 0 ? '$' + formatMoney(price) : 'Cotizar';
+            document.getElementById('price-1').innerText = formatP(selectedVariant.prices.p1);
+            document.getElementById('price-12').innerText = formatP(selectedVariant.prices.p12);
+            document.getElementById('price-50').innerText = formatP(selectedVariant.prices.p50);
+            document.getElementById('price-100').innerText = formatP(selectedVariant.prices.p100);
+            document.getElementById('price-200').innerText = formatP(selectedVariant.prices.p200);
+
+            document.getElementById('modal-qty-input').value = 1;
+            highlightActivePrice();
+        }
+
+        function updateModalInput(change) {
+            const input = document.getElementById('modal-qty-input');
+            let val = parseInt(input.value) || 0;
+            val += change;
+            if(val < 1) val = 1;
+            input.value = val;
             highlightActivePrice();
         }
 
         function highlightActivePrice() {
-            const q = parseInt(document.getElementById('modal-qty').value);
-            ['row-1','row-12','row-50','row-100','row-200'].forEach(id => document.getElementById(id).classList.remove('price-highlight'));
-            if(q >= 200) document.getElementById('row-200').classList.add('price-highlight');
-            else if(q >= 100) document.getElementById('row-100').classList.add('price-highlight');
-            else if(q >= 50) document.getElementById('row-50').classList.add('price-highlight');
-            else if(q >= 12) document.getElementById('row-12').classList.add('price-highlight');
-            else document.getElementById('row-1').classList.add('price-highlight');
+            const qty = parseInt(document.getElementById('modal-qty-input').value) || 1;
+            ['row-1', 'row-12', 'row-50', 'row-100', 'row-200'].forEach(id => {
+                document.getElementById(id).classList.remove('price-active');
+            });
+            if (qty >= 200) document.getElementById('row-200').classList.add('price-active');
+            else if (qty >= 100) document.getElementById('row-100').classList.add('price-active');
+            else if (qty >= 50) document.getElementById('row-50').classList.add('price-active');
+            else if (qty >= 12) document.getElementById('row-12').classList.add('price-active');
+            else document.getElementById('row-1').classList.add('price-active');
         }
 
-        function updateCart() {
-            const list = document.getElementById('cart-list');
-            const count = cart.reduce((a, b) => a + b.qty, 0);
-            const countBadge = document.getElementById('cart-count');
+        function closeProductModal() {
+            const modal = document.getElementById('product-modal');
+            modal.classList.add('opacity-0');
+            document.getElementById('product-modal-content').classList.remove('scale-100');
+            document.getElementById('product-modal-content').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 200);
+            clearUrl();
+        }
+
+        function addToCart(qty = 1) {
+            const item = {
+                sku: selectedVariant.sku,
+                nombre: selectedProduct.nombre,
+                variante: selectedVariant.color || selectedVariant.variable || '',
+                img: selectedVariant.img,
+                qty: qty,
+                prices: selectedVariant.prices
+            };
+
+            const existing = cart.find(i => i.sku === item.sku);
+            if (existing) existing.qty += qty; else cart.push(item);
             
-            countBadge.innerText = count;
-            if(count > 0) countBadge.classList.remove('scale-0'); else countBadge.classList.add('scale-0');
+            updateCartUI();
+            showToast("Agregado al pedido");
+            const count = document.getElementById('cart-count');
+            count.classList.add('scale-125', 'bg-orange-500');
+            setTimeout(() => count.classList.remove('scale-125', 'bg-orange-500'), 200);
+        }
 
+        function updateCartItemQty(index, newQty) {
+            const qty = parseInt(newQty);
+            if(qty < 1) cart[index].qty = 1;
+            else cart[index].qty = qty;
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            document.getElementById('cart-count').innerText = cart.reduce((acc, item) => acc + item.qty, 0);
+            const container = document.getElementById('cart-items');
             let total = 0;
-            list.innerHTML = cart.map((item, i) => {
-                const up = getPrice(item.prices, item.qty);
-                total += up * item.qty;
-                return `
-                    <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
-                        <div class="w-14 h-14 bg-gray-50 rounded-lg flex items-center justify-center p-1">
-                            <img src="${item.img}" class="w-full h-full object-contain mix-blend-multiply">
-                        </div>
-                        <div class="flex-grow">
-                            <p class="font-black text-xs text-gray-800 leading-tight mb-1">${item.nombre}</p>
-                            <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">${item.color || item.variable} | x${item.qty}</p>
-                            <p class="text-fv-blue font-black text-sm mt-1">$${(up * item.qty).toLocaleString()}</p>
-                        </div>
-                        <button onclick="del(${i})" class="w-8 h-8 rounded-full hover:bg-red-50 text-red-300 hover:text-red-500 transition flex items-center justify-center"><i class="fa-solid fa-trash-can text-sm"></i></button>
-                    </div>
-                `;
-            }).join('');
-            document.getElementById('cart-total').innerText = `$${total.toLocaleString()}`;
+            let hasQuoteItems = false;
+
+            if(cart.length === 0) {
+                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 py-10"><i class="fa-solid fa-cart-shopping text-5xl opacity-30 mb-4"></i><p class="font-bold">Tu pedido está vacío</p><button onclick="toggleCart()" class="mt-4 text-fv-blue underline text-sm">Volver al catálogo</button></div>`;
+            } else {
+                container.innerHTML = cart.map((item, i) => {
+                    const currentPrice = getDynamicPrice(item.prices, item.qty);
+                    if(currentPrice > 0) total += currentPrice * item.qty; else hasQuoteItems = true;
+                    
+                    const priceDisplay = currentPrice > 0 ? `$${formatMoney(currentPrice)}` : '<span class="text-orange-600 font-bold text-xs uppercase">Cotizar</span>';
+                    const subtotalDisplay = currentPrice > 0 ? `$${formatMoney(currentPrice * item.qty)}` : 'Cotizar';
+
+                    return `
+                        <div class="flex gap-3 items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm transition-all hover:border-orange-200">
+                            <img src="${item.img}" class="w-16 h-16 object-contain bg-gray-50 rounded-lg border border-gray-50 p-1">
+                            <div class="flex-grow overflow-hidden">
+                                <p class="font-bold text-sm leading-tight truncate text-fv-blue">${item.nombre}</p>
+                                <p class="text-xs text-gray-500 mt-1 mb-2">SKU: ${item.sku} ${item.variante ? '| ' + item.variante : ''}</p>
+                                
+                                <div class="flex justify-between items-end">
+                                    <div class="flex items-center border border-gray-300 rounded-lg h-8 w-24 overflow-hidden">
+                                        <input type="number" value="${item.qty}" min="1" class="w-full h-full text-center text-sm font-bold border-none focus:ring-0 p-0 text-gray-700" onchange="updateCartItemQty(${i}, this.value)">
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs text-gray-400">Unit: ${priceDisplay}</p>
+                                        <p class="font-bold text-sm text-fv-blue">${subtotalDisplay}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="removeFromCart(${i})" class="w-8 h-8 text-red-400 hover:bg-red-50 rounded-full transition ml-2 self-center"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>`;
+                }).join('');
+            }
+            
+            const totalLabel = hasQuoteItems && total > 0 ? `$${formatMoney(total)} + Cotización` : (total > 0 ? `$${formatMoney(total)}` : (hasQuoteItems ? 'Por Cotizar' : '$0'));
+            document.getElementById('cart-total').innerText = totalLabel;
         }
 
-        function getPrice(ps, q) {
-            if(q >= 200) return ps.p200;
-            if(q >= 100) return ps.p100;
-            if(q >= 50) return ps.p50;
-            if(q >= 12) return ps.p12;
-            return ps.p1;
+        function removeFromCart(i) { cart.splice(i, 1); updateCartUI(); }
+        function toggleCart() { document.getElementById('cart-modal').classList.toggle('hidden'); }
+
+        function sendToWhatsApp() {
+            if (cart.length === 0) return;
+            let msg = `🎨 *PEDIDO SUBLIMACIÓN - FORWARDER VENTURE*%0A`;
+            msg += `Hola, me interesan los siguientes productos:%0A%0A`;
+            
+            let total = 0;
+            let quoteItems = [];
+
+            cart.forEach(i => { 
+                const currentPrice = getDynamicPrice(i.prices, i.qty);
+                const unitPriceStr = currentPrice > 0 ? `$${formatMoney(currentPrice)}` : 'Cotizar';
+                const totalStr = currentPrice > 0 ? `$${formatMoney(currentPrice * i.qty)}` : 'A Cotizar';
+                
+                msg += `📦 *${i.nombre}*%0A`;
+                if(i.variante) msg += `   └ Opción: ${i.variante} (SKU: ${i.sku})%0A`;
+                msg += `   └ Cant: ${i.qty} | Unit: ${unitPriceStr} | Total: ${totalStr}%0A`;
+                
+                if(currentPrice > 0) total += currentPrice * i.qty;
+                else quoteItems.push(i.nombre);
+            });
+
+            msg += `%0A-----------------------------------%0A`;
+            
+            if(total > 0) {
+                 msg += `💰 *TOTAL (Antes de IVA): $${formatMoney(total)}*`;
+                 if(quoteItems.length > 0) msg += ` (+ Productos a cotizar)`;
+                 msg += `%0A`;
+            } else if (quoteItems.length > 0) {
+                 msg += `💰 *TOTAL: Se requiere cotización*%0A`;
+            }
+
+            msg += `-----------------------------------%0A`;
+            msg += `Quedo atento a la confirmación.%0A`;
+
+            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
         }
 
-        function filter(c) { activeCat = c; renderUI(); }
-        function adjQty(v) { 
-            const i = document.getElementById('modal-qty');
-            i.value = Math.max(1, parseInt(i.value) + v); 
-            highlightActivePrice();
-        }
-        function toggleCart() { document.getElementById('cart-panel').classList.toggle('hidden'); }
-        function closeModal() { 
-            document.getElementById('product-modal').classList.remove('opacity-100');
-            setTimeout(() => document.getElementById('product-modal').classList.add('hidden'), 300);
-        }
-        function del(i) { cart.splice(i, 1); updateCart(); }
-
-        function checkout() {
-            if(cart.length === 0) return;
-            let m = `🚀 *PEDIDO - FORWARDER VENTURE*%0A%0A`;
-            cart.forEach(i => m += `• *${i.nombre}* (${i.color || i.variable}) x${i.qty}%0A`);
-            m += `%0A*TOTAL ESTIMADO: ${document.getElementById('cart-total').innerText}*%0A(Precios antes de IVA)`;
-            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${m}`, '_blank');
+        function shareProductWhatsApp() {
+            const url = window.location.href;
+            const text = `¡Mira este producto de Forwarder Venture! 🎨\n\n*${selectedProduct.nombre}*\n${url}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         }
 
-        init();
+        function checkUrlForProduct() {
+            const params = new URLSearchParams(window.location.search);
+            const productSlug = params.get('p');
+            if (productSlug && allProducts.length > 0) {
+                const product = allProducts.find(p => p.slug === productSlug);
+                if (product) openProductModal(product.id);
+            }
+        }
+        
+        function updateUrl(slug) { window.history.pushState({path: slug}, '', '?p=' + slug); }
+        function clearUrl() { window.history.pushState({path: '/'}, '', window.location.pathname.split('?')[0]); }
+        function shareProduct() { 
+            navigator.clipboard.writeText(window.location.href)
+                .then(() => showToast("Enlace directo copiado 🔗"))
+                .catch(() => showToast("Error al copiar enlace"));
+        }
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            t.classList.remove('opacity-0', 'translate-y-[-20px]');
+            setTimeout(() => t.classList.add('opacity-0', 'translate-y-[-20px]'), 3000);
+        }
+
+        loadProducts();
     </script>
 </body>
 </html>
