@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Sublimación - Forwarder Venture</title>
+    <title>Catálogo Tecnología - Forwarder Venture</title>
     
     <link rel="icon" type="image/jpg" href="logo.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -23,7 +23,7 @@
 
         .banner-hero {
             background: linear-gradient(90deg, rgba(0,46,95,0.95) 0%, rgba(0,46,95,0.8) 50%, rgba(0,46,95,0.4) 100%), 
-                        url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1600&auto=format&fit=crop');
+                        url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1600&auto=format&fit=crop');
             background-size: cover; background-position: center;
         }
 
@@ -32,6 +32,9 @@
 
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
+
+        .skeleton { background: #e2e8f0; background: linear-gradient(110deg, #ececec 8%, #f5f5f5 18%, #ececec 33%); background-size: 200% 100%; animation: 1.5s shine linear infinite; }
+        @keyframes shine { to { background-position-x: -200%; } }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-gray-900">
@@ -49,8 +52,8 @@
         <section class="banner-hero p-8 md:p-20 flex items-center min-h-[300px] relative overflow-hidden">
             <div class="relative z-10 max-w-3xl text-white">
                 <span class="bg-orange-600 text-white px-3 py-1 font-black text-xs uppercase tracking-widest mb-4 inline-block rounded-sm">Catálogo Oficial</span>
-                <h1 class="text-5xl md:text-7xl font-black leading-none mb-4 uppercase drop-shadow-md">Sublimación <br>& Diseño</h1>
-                <p class="text-gray-100 text-sm md:text-lg font-medium max-w-xl drop-shadow">Insumos, herramientas y productos personalizados para tu negocio.</p>
+                <h1 class="text-5xl md:text-7xl font-black leading-none mb-4 uppercase drop-shadow-md">Tecnología <br>& Gadgets</h1>
+                <p class="text-gray-100 text-sm md:text-lg font-medium max-w-xl drop-shadow">Los mejores dispositivos, accesorios y soluciones tecnológicas para tu día a día.</p>
             </div>
         </section>
 
@@ -78,8 +81,19 @@
             </div>
         </div>
 
-        <main class="p-6 md:p-10 flex-grow bg-gray-50/50 pb-20">
+        <main class="p-6 md:p-10 flex-grow bg-gray-50/50 pb-10">
             <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6"></div>
+            
+            <div id="loading-trigger" class="py-10 text-center">
+                <div id="skeleton-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 hidden"></div>
+                <div id="end-message" class="hidden py-10">
+                    <div class="flex flex-col items-center gap-2">
+                        <div class="w-12 h-[2px] bg-gray-200"></div>
+                        <p class="text-gray-400 font-black text-xs uppercase tracking-widest">Ya viste todos los productos tecnológicos</p>
+                        <div class="w-12 h-[2px] bg-gray-200"></div>
+                    </div>
+                </div>
+            </div>
         </main>
 
         <footer class="bg-gray-900 text-white py-14 px-6 border-t-4 border-orange-600 mt-auto text-center">
@@ -97,30 +111,25 @@
     <div id="product-modal" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0">
         <div class="bg-white w-full max-w-xl rounded-3xl overflow-hidden relative shadow-2xl transform scale-95 transition-all" id="product-modal-content">
             <button onclick="closeModal()" class="absolute top-4 right-4 w-10 h-10 bg-black/5 rounded-full flex items-center justify-center transition hover:bg-black/10 text-gray-800 z-20"><i class="fa-solid fa-xmark text-xl"></i></button>
-            
             <div class="bg-white border-b border-gray-100 p-6 flex flex-col items-center">
                 <div class="h-64 flex items-center justify-center w-full relative">
                     <img id="modal-img" src="" class="max-h-full max-w-full object-contain">
                 </div>
                 <div id="modal-gallery" class="flex gap-2 mt-4 overflow-x-auto w-full justify-center hide-scrollbar p-2"></div>
             </div>
-
             <div class="p-8">
                 <span id="modal-type" class="text-orange-600 font-black text-[10px] uppercase tracking-widest"></span>
                 <h2 id="modal-title" class="text-2xl font-black text-fv-blue mt-1 mb-4 leading-tight uppercase"></h2>
-                
                 <div id="variant-section" class="mb-6 hidden">
-                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Opciones:</label>
+                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Versión / Color:</label>
                     <div id="variant-container" class="flex flex-wrap gap-2"></div>
                 </div>
-
                 <div class="flex items-center justify-between mb-8 bg-gray-50 p-5 rounded-2xl border border-gray-100">
                     <div>
                         <span class="text-gray-400 text-[10px] font-black uppercase block leading-none mb-1 tracking-tight">Precio Unit. (S/IVA)</span>
                         <span id="modal-price" class="text-3xl font-black text-fv-blue"></span>
                     </div>
                 </div>
-                
                 <div class="grid grid-cols-2 gap-3">
                     <button onclick="shareSingleProduct()" class="bg-[#F0FDF4] text-[#16A34A] rounded-2xl py-4 font-black flex items-center justify-center gap-2 hover:bg-green-100 transition shadow-sm uppercase"><i class="fa-brands fa-whatsapp text-xl"></i> COMPARTIR</button>
                     <button onclick="addToCartFromModal()" class="bg-[#0F172A] text-white rounded-2xl py-4 font-black flex items-center justify-center gap-2 hover:opacity-90 transition shadow-sm uppercase"><i class="fa-solid fa-plus text-xl"></i> AÑADIR</button>
@@ -132,13 +141,13 @@
     <div id="cart-modal" class="hidden fixed inset-0 bg-black/60 z-[200] flex justify-end">
         <div class="bg-white w-full max-w-md h-full flex flex-col shadow-2xl animate-slide-up md:animate-none">
             <div class="p-6 border-b flex justify-between items-center bg-white">
-                <h2 class="text-2xl font-black text-fv-blue uppercase tracking-tighter">TU PEDIDO</h2>
+                <h2 class="text-2xl font-black text-fv-blue uppercase tracking-tighter">TU PEDIDO TECH</h2>
                 <button onclick="toggleCart()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div id="cart-items" class="flex-grow overflow-y-auto p-6 space-y-4 bg-gray-50"></div>
             <div class="p-6 border-t bg-white">
                 <div class="flex justify-between items-center mb-6">
-                    <span class="font-black text-gray-400 text-xs uppercase">Total estimado (S/IVA):</span>
+                    <span class="font-black text-gray-400 text-xs uppercase">Total (S/IVA):</span>
                     <span id="cart-total" class="text-3xl font-black text-fv-blue">$0</span>
                 </div>
                 <button onclick="sendOrderWhatsApp()" class="w-full bg-[#25D366] text-white py-4 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-lg hover:bg-[#128C7E] transition">
@@ -164,13 +173,15 @@
         let selectedGroup = null;
         let selectedVariant = null;
 
-        // FORMATEO DE MONEDA PERFECTO: $ 10.000
+        let itemsToShow = 50;
+        let currentPage = 1;
+        let filteredGroups = [];
+        let isLoading = false;
+
         function formatMoney(amount) {
             return new Intl.NumberFormat('es-CO', { 
-                style: 'currency', 
-                currency: 'COP', 
-                minimumFractionDigits: 0, 
-                maximumFractionDigits: 0 
+                style: 'currency', currency: 'COP', 
+                minimumFractionDigits: 0, maximumFractionDigits: 0 
             }).format(amount);
         }
 
@@ -179,44 +190,31 @@
                 download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
                     const tempGroups = {};
-                    
                     results.data.forEach((row, index) => {
                         const sku = row['SKU']?.trim();
                         const pSku = row['PARENT SKU']?.trim() || sku;
                         if (!sku) return;
 
-                        // Limpieza impecable del precio 
                         let pStr = row['PRECIO 1']?.toString() || '0';
-                        pStr = pStr.replace(/[,.]\d{2}$/, ''); // Remover decimales si existen
+                        pStr = pStr.replace(/[,.]\d{2}$/, ''); 
                         const precioVenta = parseInt(pStr.replace(/\D/g, '')) || 0;
-
                         const rawImgs = row['IMAGEN']?.split('|').map(i => i.trim()).filter(i => i !== "") || [];
                         const imgs = rawImgs.length > 0 ? rawImgs : ['https://via.placeholder.com/400'];
 
                         if (!tempGroups[pSku]) {
                             tempGroups[pSku] = {
-                                id: pSku,
-                                nombre: row['NOMBRE'],
-                                tipo: row['TIPO'] || 'General',
-                                index: index,
-                                skuMap: {}
+                                id: pSku, nombre: row['NOMBRE'], tipo: row['TIPO'] || 'Tecnología', index: index, skuMap: {}
                             };
                         }
-
-                        // Conservar precio más alto para proteger el margen
                         if (!tempGroups[pSku].skuMap[sku] || precioVenta > tempGroups[pSku].skuMap[sku].precio) {
                             tempGroups[pSku].skuMap[sku] = {
-                                sku: sku,
-                                variable: row['VARIABLE'] || row['COLOR'] || '',
-                                imgs: imgs,
-                                precio: precioVenta
+                                sku: sku, variable: row['VARIABLE'] || row['COLOR'] || '', imgs: imgs, precio: precioVenta
                             };
                         }
                     });
 
                     allGroups = Object.values(tempGroups).map(group => ({
-                        ...group,
-                        variaciones: Object.values(group.skuMap)
+                        ...group, variaciones: Object.values(group.skuMap)
                     }));
 
                     updateCategoryNav();
@@ -240,54 +238,86 @@
             const search = document.getElementById('search-input').value.toLowerCase();
             const sortMode = document.getElementById('sort-select').value;
 
-            let filtered = allGroups.filter(p => {
+            filteredGroups = allGroups.filter(p => {
                 const matchType = currentCategory === 'Ver Todo' || p.tipo === currentCategory;
                 const matchSearch = p.nombre.toLowerCase().includes(search);
                 return matchType && matchSearch;
             });
 
-            if (sortMode === 'asc') filtered.sort((a, b) => a.variaciones[0].precio - b.variaciones[0].precio);
-            else if (sortMode === 'desc') filtered.sort((a, b) => b.variaciones[0].precio - a.variaciones[0].precio);
-            else if (sortMode === 'az') filtered.sort((a, b) => a.nombre.localeCompare(b.nombre));
-            else if (sortMode === 'za') filtered.sort((a, b) => b.nombre.localeCompare(a.nombre));
-            else if (sortMode === 'recent') filtered.sort((a, b) => b.index - a.index);
+            if (sortMode === 'asc') filteredGroups.sort((a, b) => a.variaciones[0].precio - b.variaciones[0].precio);
+            else if (sortMode === 'desc') filteredGroups.sort((a, b) => b.variaciones[0].precio - a.variaciones[0].precio);
+            else if (sortMode === 'az') filteredGroups.sort((a, b) => a.nombre.localeCompare(b.nombre));
+            else if (sortMode === 'za') filteredGroups.sort((a, b) => b.nombre.localeCompare(a.nombre));
+            else if (sortMode === 'recent') filteredGroups.sort((a, b) => b.index - a.index);
 
-            renderGrid(filtered);
+            currentPage = 1;
+            document.getElementById('product-grid').innerHTML = '';
+            document.getElementById('end-message').classList.add('hidden');
+            renderMoreItems();
         }
 
-        function renderGrid(products) {
+        function renderMoreItems() {
+            if (isLoading) return;
+            isLoading = true;
             const grid = document.getElementById('product-grid');
-            if(products.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-400 font-bold">No se encontraron productos.</div>';
-                return;
-            }
+            const skeleton = document.getElementById('skeleton-container');
+            
+            skeleton.classList.remove('hidden');
+            skeleton.innerHTML = Array(10).fill(0).map(() => `
+                <div class="bg-white rounded-2xl p-4 border border-gray-100">
+                    <div class="aspect-square skeleton rounded-xl mb-4"></div>
+                    <div class="h-4 skeleton w-3/4 mb-2 rounded"></div>
+                    <div class="h-4 skeleton w-1/2 rounded"></div>
+                </div>`).join('');
 
-            // DISEÑO EXACTO A LA CAPTURA
-            grid.innerHTML = products.map(p => {
-                const main = p.variaciones[0];
-                return `
-                <div class="bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 flex flex-col cursor-pointer relative group transition-transform hover:-translate-y-1" onclick="openModal('${p.id}')">
-                    <div class="aspect-square p-2 bg-white flex items-center justify-center relative">
-                        <img src="${main.imgs[0]}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-500">
-                        <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[9px] font-black uppercase text-fv-blue shadow-sm border border-gray-50">${p.tipo}</div>
-                    </div>
-                    <div class="p-4 flex flex-col flex-grow bg-white z-10">
-                        <h3 class="font-black text-[12px] text-fv-blue leading-tight mb-2 h-8 line-clamp-2 uppercase">${p.nombre}</h3>
-                        <div class="mt-auto flex justify-between items-center pt-3 border-t border-gray-50">
-                            <p class="text-[15px] font-black text-fv-blue">${formatMoney(main.precio)}</p>
-                            <div class="flex gap-2">
-                                <button onclick="quickShare(event, '${p.id}')" class="w-9 h-9 bg-[#F0FDF4] text-[#16A34A] rounded-xl flex items-center justify-center hover:bg-green-100 transition shadow-sm">
-                                    <i class="fa-brands fa-whatsapp text-lg"></i>
-                                </button>
-                                <button onclick="quickAdd(event, '${p.id}')" class="w-9 h-9 bg-[#0F172A] text-white rounded-xl flex items-center justify-center hover:bg-fv-blue transition shadow-sm">
-                                    <i class="fa-solid fa-plus text-lg"></i>
-                                </button>
+            setTimeout(() => {
+                const start = (currentPage - 1) * itemsToShow;
+                const end = start + itemsToShow;
+                const chunk = filteredGroups.slice(start, end);
+
+                skeleton.classList.add('hidden');
+
+                if (chunk.length === 0 && currentPage === 1) {
+                    grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-400 font-bold uppercase text-xs tracking-widest">No se encontraron productos en esta categoría</div>';
+                } else {
+                    const html = chunk.map(p => {
+                        const main = p.variaciones[0];
+                        return `
+                        <div class="bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 flex flex-col cursor-pointer relative group transition-transform hover:-translate-y-1" onclick="openModal('${p.id}')">
+                            <div class="aspect-square p-2 bg-white flex items-center justify-center relative">
+                                <img src="${main.imgs[0]}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-500">
+                                <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[9px] font-black uppercase text-fv-blue shadow-sm border border-gray-50">${p.tipo}</div>
                             </div>
-                        </div>
-                    </div>
-                </div>`;
-            }).join('');
+                            <div class="p-4 flex flex-col flex-grow bg-white z-10">
+                                <h3 class="font-black text-[12px] text-fv-blue leading-tight mb-2 h-8 line-clamp-2 uppercase">${p.nombre}</h3>
+                                <div class="mt-auto flex justify-between items-center pt-3 border-t border-gray-50">
+                                    <p class="text-[15px] font-black text-fv-blue">${formatMoney(main.precio)}</p>
+                                    <div class="flex gap-2">
+                                        <button onclick="quickShare(event, '${p.id}')" class="w-9 h-9 bg-[#F0FDF4] text-[#16A34A] rounded-xl flex items-center justify-center hover:bg-green-100 transition shadow-sm"><i class="fa-brands fa-whatsapp text-lg"></i></button>
+                                        <button onclick="quickAdd(event, '${p.id}')" class="w-9 h-9 bg-[#0F172A] text-white rounded-xl flex items-center justify-center hover:bg-fv-blue transition shadow-sm"><i class="fa-solid fa-plus text-lg"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                    grid.insertAdjacentHTML('beforeend', html);
+                }
+
+                isLoading = false;
+                if (currentPage * itemsToShow >= filteredGroups.length && filteredGroups.length > 0) {
+                    document.getElementById('end-message').classList.remove('hidden');
+                }
+            }, 400); 
         }
+
+        window.addEventListener('scroll', () => {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800) {
+                if (!isLoading && (currentPage * itemsToShow < filteredGroups.length)) {
+                    currentPage++;
+                    renderMoreItems();
+                }
+            }
+        });
 
         function openModal(groupId) {
             selectedGroup = allGroups.find(p => p.id === groupId);
@@ -308,7 +338,6 @@
             document.getElementById('modal-type').innerText = selectedGroup.tipo;
             document.getElementById('modal-img').src = selectedVariant.imgs[0];
             document.getElementById('modal-price').innerText = formatMoney(selectedVariant.precio);
-
             const gallery = document.getElementById('modal-gallery');
             if(selectedVariant.imgs.length > 1) {
                 gallery.classList.remove('hidden');
@@ -317,7 +346,6 @@
                         <img src="${img}" class="w-full h-full object-contain">
                     </div>`).join('');
             } else gallery.classList.add('hidden');
-
             const vSection = document.getElementById('variant-section');
             if (selectedGroup.variaciones.length > 1) {
                 vSection.classList.remove('hidden');
@@ -342,9 +370,8 @@
             window.history.pushState({}, '', window.location.pathname);
         }
 
-        // FUNCIONES DE CARRITO Y COMPARTIR CON PREVENCIÓN DE PROPAGACIÓN
         function quickAdd(event, groupId) {
-            event.stopPropagation(); // Evita que se abra el modal
+            event.stopPropagation();
             const g = allGroups.find(p => p.id === groupId);
             const v = g.variaciones[0];
             if(!cart.find(c => c.sku === v.sku)) cart.push({ ...v, nombre: g.nombre });
@@ -354,22 +381,20 @@
 
         function addToCartFromModal() {
             if(!cart.find(c => c.sku === selectedVariant.sku)) cart.push({ ...selectedVariant, nombre: selectedGroup.nombre });
-            updateCartUI(); 
-            closeModal();
-            showToast();
+            updateCartUI(); closeModal(); showToast();
         }
 
         function quickShare(event, groupId) {
-            event.stopPropagation(); // Evita que se abra el modal
+            event.stopPropagation();
             const g = allGroups.find(p => p.id === groupId);
             const url = `${window.location.origin}${window.location.pathname}?p=${groupId}`;
-            const text = `🎨 *FORWARDER VENTURE*\n\nSublimación & Diseño:\n*${g.nombre}*\n\nInfo: ${url}`;
+            const text = `🚀 *TECH - FORWARDER VENTURE*\n\nDispositivo:\n*${g.nombre}*\n\nInfo: ${url}`;
             window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         }
 
         function shareSingleProduct() { 
             const url = `${window.location.origin}${window.location.pathname}?p=${selectedGroup.id}`;
-            const text = `🎨 *FORWARDER VENTURE*\n\nSublimación & Diseño:\n*${selectedGroup.nombre}*\n\nInfo: ${url}`;
+            const text = `🚀 *TECH - FORWARDER VENTURE*\n\nDispositivo:\n*${selectedGroup.nombre}*\n\nInfo: ${url}`;
             window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         }
 
@@ -401,7 +426,6 @@
 
         function removeFromCart(i) { cart.splice(i, 1); updateCartUI(); }
         function toggleCart() { document.getElementById('cart-modal').classList.toggle('hidden'); }
-
         function showToast() {
             const t = document.getElementById('toast');
             t.classList.remove('opacity-0', 'translate-y-[-20px]');
@@ -410,10 +434,10 @@
 
         function sendOrderWhatsApp() {
             if(cart.length === 0) return;
-            let msg = `🎨 *PEDIDO - FORWARDER VENTURE*%0A%0AHola, deseo cotizar los siguientes insumos:%0A%0A`;
+            let msg = `🚀 *PEDIDO TECH - FORWARDER VENTURE*%0A%0AHola, deseo cotizar los siguientes productos:%0A%0A`;
             cart.forEach(item => msg += `• *${item.nombre}* ${item.variable ? '('+item.variable+')' : ''} - ${formatMoney(item.precio)}%0A`);
             const total = cart.reduce((acc, i) => acc + i.precio, 0);
-            msg += `%0A*TOTAL ESTIMADO (S/IVA): ${formatMoney(total)}*%0A%0A_Precios antes de IVA._`;
+            msg += `%0A*TOTAL ESTIMADO (S/IVA): ${formatMoney(total)}*%0A%0A_Precios sujetos a disponibilidad._`;
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
         }
 
