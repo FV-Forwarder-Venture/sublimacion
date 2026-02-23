@@ -54,7 +54,7 @@
             </div>
         </section>
 
-        <div class="p-6 border-b border-gray-100 sticky top-[80px] bg-white z-40 shadow-sm">
+        <div class="p-6 border-b border-gray-100 sticky top-[80px] bg-white z-40">
             <div class="flex flex-col md:flex-row gap-4 justify-between items-center">
                 <nav id="category-nav" class="flex gap-2 overflow-x-auto w-full md:w-auto hide-scrollbar pb-1"></nav>
                 
@@ -110,7 +110,7 @@
                 <h2 id="modal-title" class="text-xl md:text-2xl font-black text-fv-blue mt-1 mb-4 leading-tight uppercase"></h2>
                 
                 <div id="variant-section" class="mb-4 hidden">
-                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Opciones:</label>
+                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Opciones Principales:</label>
                     <div id="variant-container" class="flex flex-wrap gap-2"></div>
                 </div>
 
@@ -158,9 +158,9 @@
     </div>
 
     <script>
-        const WHATSAPP_NUMBER = '3183035997'; // Teléfono Tecnología y Hogar
+        const WHATSAPP_NUMBER = '3183035997'; 
         const SHEET_ID = '17a0Pxq1EOLRf86yiuM014ZluVqL2Qj1Mt8cKRDenjHc';
-        const GID = '0'; // GID Tecnología y Hogar
+        const GID = '0'; 
         const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
         let allGroups = [];
@@ -172,22 +172,23 @@
         let currentVariable = null; 
         let currentExtra = null; 
         
-        let searchTimeout = null; // Para el amortiguador del buscador
+        let searchTimeout = null;
 
-        // FORMATO DE MONEDA IMPECABLE
+        // FORMATO PERFECTO: $ 10.000
         function formatMoney(amount) {
-            return new Intl.NumberFormat('es-CO', { 
-                style: 'currency', 
-                currency: 'COP', 
-                minimumFractionDigits: 0, 
-                maximumFractionDigits: 0 
-            }).format(amount);
+            return '$ ' + amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
-        // FUNCIÓN INTELIGENTE ANTI-TILDES
-        function normalizeText(text) {
-            if (!text) return '';
-            return text.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        // LIMPIADOR ULTRA-AVANZADO PARA BÚSQUEDAS (Elimina tildes y mayúsculas)
+        function normalizeStr(str) {
+            if (!str) return '';
+            return str.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        }
+
+        // LIMPIADOR PARA VARIABLES (Evita botones duplicados)
+        function cleanVariant(str) {
+            if (!str) return '';
+            return str.toString().replace(/[\u200B-\u200D\uFEFF\xA0]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
         }
 
         function loadProducts() {
@@ -201,29 +202,26 @@
                         const pSku = row['PARENT SKU']?.trim() || sku;
                         if (!sku) return;
 
-                        // Parseo robusto de precio
                         let pStr = row['PRECIO DE VENTA']?.toString() || '0';
-                        pStr = pStr.replace(/[,.]\d{1,2}$/, ''); // Quita decimales si existen
+                        pStr = pStr.replace(/[,.]\d{1,2}$/, ''); 
                         const precioVenta = parseInt(pStr.replace(/\D/g, '')) || 0;
 
                         const rawImgs = row['IMAGEN']?.split('|').map(i => i.trim()).filter(i => i !== "") || [];
                         const imgs = rawImgs.length > 0 ? rawImgs : ['https://via.placeholder.com/400'];
 
+                        const safeVariable = cleanVariant(row['VARIABLE']);
+                        const safeExtra = cleanVariant(row['EXTRA']);
+
                         if (!tempGroups[pSku]) {
                             tempGroups[pSku] = {
                                 id: pSku,
                                 nombre: row['NOMBRE']?.trim() || 'Producto Sin Nombre',
-                                tipo: row['TIPO']?.trim() || 'Varios',
+                                tipo: row['TIPO']?.trim() || 'General',
                                 index: index,
                                 skuMap: {}
                             };
                         }
 
-                        // Limpieza drástica de Variable y Extra para evitar repetidos
-                        const safeVariable = (row['VARIABLE'] || '').toString().trim().toUpperCase();
-                        const safeExtra = (row['EXTRA'] || '').toString().trim().toUpperCase();
-
-                        // Guardar si no existe, o si existe pero el precio actual es MAYOR
                         if (!tempGroups[pSku].skuMap[sku] || precioVenta > tempGroups[pSku].skuMap[sku].precio) {
                             tempGroups[pSku].skuMap[sku] = {
                                 sku: sku,
@@ -257,22 +255,27 @@
 
         function filterType(t) { currentCategory = t; updateCategoryNav(); applyFilters(); }
 
-        // BUSCADOR OPTIMIZADO
+        // BÚSQUEDA INTELIGENTE SIN RETRASOS
         function debounceSearch() {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(applyFilters, 300);
+            searchTimeout = setTimeout(applyFilters, 250);
         }
 
         function applyFilters() {
             const rawSearch = document.getElementById('search-input').value;
-            const searchTerms = normalizeText(rawSearch).split(' ').filter(term => term.length > 0);
+            const searchTerms = normalizeStr(rawSearch).split(/\s+/).filter(term => term.length > 0);
             const sortMode = document.getElementById('sort-select').value;
 
             let filtered = allGroups.filter(p => {
                 const matchType = currentCategory === 'Ver Todo' || p.tipo === currentCategory;
                 
-                // Búsqueda profunda en Nombre, Tipo, Variable y Extra
-                const combinedText = normalizeText(p.nombre + " " + p.tipo + " " + p.variaciones.map(v => v.variable + " " + v.extra).join(" "));
+                // Unimos todos los textos posibles del producto para la búsqueda
+                let textToSearch = p.nombre + " " + p.tipo;
+                p.variaciones.forEach(v => {
+                    textToSearch += " " + v.variable + " " + v.extra + " " + v.sku;
+                });
+                
+                const combinedText = normalizeStr(textToSearch);
                 const matchSearch = searchTerms.every(term => combinedText.includes(term));
                 
                 return matchType && matchSearch;
@@ -294,7 +297,7 @@
                 return;
             }
 
-            // APLICADA CARGA PEREZOSA (loading="lazy")
+            // CARGA PEREZOSA (loading="lazy") APLICADA A IMÁGENES
             grid.innerHTML = products.map(p => {
                 const main = p.variaciones[0];
                 return `
@@ -304,7 +307,7 @@
                         <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[9px] font-black uppercase text-fv-orange shadow-sm border border-gray-50">${p.tipo}</div>
                     </div>
                     <div class="p-4 flex flex-col flex-grow bg-white z-10">
-                        <h3 class="font-black text-[12px] text-fv-blue leading-tight mb-2 h-8 line-clamp-2">${p.nombre}</h3>
+                        <h3 class="font-black text-[12px] text-fv-blue leading-tight mb-2 h-8 line-clamp-2 uppercase">${p.nombre}</h3>
                         <div class="mt-auto flex justify-between items-center pt-3 border-t border-gray-50">
                             <p class="text-[15px] font-black text-fv-blue">${formatMoney(main.precio)}</p>
                             <div class="flex gap-2">
@@ -321,7 +324,7 @@
             }).join('');
         }
 
-        // --- LÓGICA DE APERTURA Y FILTROS ANIDADOS (Cero duplicados) ---
+        // --- LÓGICA DE APERTURA Y FILTROS ANIDADOS EXACTOS ---
         function openModal(groupId) {
             selectedGroup = allGroups.find(p => p.id === groupId);
             if(!selectedGroup) return;
@@ -342,7 +345,7 @@
 
         function selectVariable(v) {
             currentVariable = v;
-            // Filtro inteligente: Ver qué extras están disponibles para esta nueva variable
+            // Filtro Inteligente: Verifica qué extras están disponibles para esta nueva variable
             const validExtras = selectedGroup.variaciones
                 .filter(varObj => varObj.variable === currentVariable)
                 .map(varObj => varObj.extra);
@@ -379,7 +382,7 @@
                     </div>`).join('');
             } else gallery.classList.add('hidden');
 
-            // Set elimina automáticamente duplicados
+            // Botones VARIABLE (El Set elimina duplicados automáticamente)
             const uniqueVars = [...new Set(selectedGroup.variaciones.map(v => v.variable).filter(v => v !== ''))];
             const vSection = document.getElementById('variant-section');
             if (uniqueVars.length > 0) {
@@ -388,7 +391,7 @@
                     <button onclick="selectVariable('${v}')" class="variant-btn ${v === currentVariable ? 'active' : ''}">${v}</button>`).join('');
             } else vSection.classList.add('hidden');
 
-            // Construir botones Extra SÓLO con lo que aplica a la Variable actual
+            // Botones EXTRA (Dependientes de la Variable actual)
             const availableExtras = [...new Set(selectedGroup.variaciones
                 .filter(v => v.variable === currentVariable)
                 .map(v => v.extra)
@@ -416,6 +419,7 @@
             window.history.pushState({}, '', window.location.pathname);
         }
 
+        // FUNCIONES CON PREVENCIÓN DE APERTURA DE MODAL
         function quickAdd(event, groupId) {
             event.stopPropagation();
             const g = allGroups.find(p => p.id === groupId);
