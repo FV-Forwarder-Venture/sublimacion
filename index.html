@@ -30,11 +30,12 @@
         .variant-btn { border: 2px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; transition: all 0.2s; cursor: pointer; text-transform: uppercase; color: #4b5563; }
         .variant-btn.active { border-color: #002e5f; background-color: #002e5f; color: white; }
 
+        /* Animaciones */
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
         
-        /* Loader del Infinite Scroll */
-        .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #e85d04; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
+        /* Spinner de Carga Infinita */
+        .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #002e5f; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -120,7 +121,7 @@
                 <h2 id="modal-title" class="text-xl md:text-2xl font-black text-fv-blue mt-1 mb-4 leading-tight uppercase"></h2>
                 
                 <div id="variant-section" class="mb-4 hidden">
-                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Opciones:</label>
+                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Opciones Principales:</label>
                     <div id="variant-container" class="flex flex-wrap gap-2"></div>
                 </div>
 
@@ -170,7 +171,7 @@
     <script>
         const WHATSAPP_NUMBER = '3114957971'; // Teléfono Sublimación
         const SHEET_ID = '17a0Pxq1EOLRf86yiuM014ZluVqL2Qj1Mt8cKRDenjHc';
-        const GID = '129591070'; // GID Sublimación
+        const GID = '129591070'; // Pestaña Sublimación
         const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
         let allGroups = [];
@@ -192,12 +193,12 @@
             return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
         }
 
-        // LIMPIADOR AVANZADO PARA TEXTOS Y VARIABLES (Evita duplicados falsos)
+        // LIMPIADOR AVANZADO PARA TEXTOS Y VARIABLES
         function superClean(text) {
             if (!text) return '';
             return text.toString()
-                .replace(/[\u200B-\u200D\uFEFF]/g, '') 
-                .replace(/\s+/g, ' ') 
+                .replace(/[\u200B-\u200D\uFEFF]/g, '') // Elimina espacios invisibles 
+                .replace(/\s+/g, ' ') // Elimina saltos de línea y espacios dobles
                 .trim()
                 .toUpperCase();
         }
@@ -219,16 +220,23 @@
                     results.data.forEach((row, index) => {
                         const sku = row['SKU']?.toString().trim();
                         
+                        // EVITAR EL "PRODUCTO GIGANTE": Si no hay Parent SKU ni SKU, le asignamos un ID único por fila
                         let pSku = row['PARENT SKU']?.toString().trim();
                         if(!pSku) pSku = sku || `FILA-SIN-SKU-${index}`;
                         
+                        // Si la fila está completamente vacía de nombre y sku, saltarla
                         if (!row['NOMBRE'] && !sku) return;
 
-                        // Compatible con PRECIO DE VENTA o PRECIO 1
+                        // LÓGICA COLUMNA VISIBLE: Si dice NO, se omite por completo.
+                        const visibleFlag = (row['VISIBLE'] || '').toString().trim().toUpperCase();
+                        if (visibleFlag === 'NO') return;
+
+                        // Busca PRECIO DE VENTA, si no existe usa PRECIO 1
                         let pStr = (row['PRECIO DE VENTA'] || row['PRECIO 1'] || '0').toString();
                         pStr = pStr.replace(/[,.]\d{1,2}$/, ''); 
                         const precioVenta = parseInt(pStr.replace(/\D/g, '')) || 0;
 
+                        // Acumulación de imágenes separadas por |
                         const rawImgs = row['IMAGEN']?.split('|').map(i => i.trim()).filter(i => i !== "") || [];
                         const imgs = rawImgs.length > 0 ? rawImgs : ['https://via.placeholder.com/400'];
 
@@ -245,7 +253,8 @@
                         const safeVariable = superClean(row['VARIABLE']);
                         const safeExtra = superClean(row['EXTRA']);
 
-                        if (!tempGroups[pSku].skuMap[sku] || precioVenta > tempGroups[pSku].skuMap[sku].precio) {
+                        if (!tempGroups[pSku].skuMap[sku]) {
+                            // Primera vez que vemos este SKU
                             tempGroups[pSku].skuMap[sku] = {
                                 sku: sku,
                                 variable: safeVariable,
@@ -253,18 +262,40 @@
                                 imgs: imgs,
                                 precio: precioVenta
                             };
+                        } else {
+                            // Si el SKU ya existe, hacemos un MIX de imágenes de los distintos proveedores
+                            let currentImgs = tempGroups[pSku].skuMap[sku].imgs;
+                            let combinedImgs = [...currentImgs, ...rawImgs];
+                            
+                            // Si llegaron imágenes reales, quitamos la de relleno
+                            if (rawImgs.length > 0) {
+                                combinedImgs = combinedImgs.filter(i => i !== 'https://via.placeholder.com/400');
+                            }
+                            
+                            // Borrar imágenes duplicadas 
+                            tempGroups[pSku].skuMap[sku].imgs = [...new Set(combinedImgs)];
+
+                            // Protección de margen de ganancia
+                            if (precioVenta > tempGroups[pSku].skuMap[sku].precio) {
+                                tempGroups[pSku].skuMap[sku].precio = precioVenta;
+                            }
                         }
                     });
 
+                    // Convertir el objeto a Array
                     allGroups = Object.values(tempGroups).map(group => ({
                         ...group,
                         variaciones: Object.values(group.skuMap)
                     }));
 
+                    // Eliminar grupos que hayan quedado vacíos
+                    allGroups = allGroups.filter(g => g.variaciones.length > 0);
+
                     updateCategoryNav();
                     applyFilters();
                     checkUrlForProduct();
 
+                    // Activar el sensor de scroll infinito
                     window.addEventListener('scroll', handleScroll);
                 }
             });
@@ -293,18 +324,21 @@
             filteredGroups = allGroups.filter(p => {
                 const matchType = currentCategory === 'Ver Todo' || p.tipo === currentCategory;
                 
+                // Buscar coincidencia ignorando tildes y mayúsculas
                 const searchText = removeAccentsAndLower(p.nombre + " " + p.tipo + " " + p.variaciones.map(v => v.variable + " " + v.extra).join(" "));
                 const matchSearch = searchTerms.every(term => searchText.includes(term));
                 
                 return matchType && matchSearch;
             });
 
+            // Ordenamiento
             if (sortMode === 'asc') filteredGroups.sort((a, b) => a.variaciones[0].precio - b.variaciones[0].precio);
             else if (sortMode === 'desc') filteredGroups.sort((a, b) => b.variaciones[0].precio - a.variaciones[0].precio);
             else if (sortMode === 'az') filteredGroups.sort((a, b) => a.nombre.localeCompare(b.nombre));
             else if (sortMode === 'za') filteredGroups.sort((a, b) => b.nombre.localeCompare(a.nombre));
             else if (sortMode === 'recent') filteredGroups.sort((a, b) => b.index - a.index);
 
+            // Reiniciar scroll infinito
             currentStartIndex = 0;
             document.getElementById('product-grid').innerHTML = ''; 
             loadMoreProducts();
@@ -328,11 +362,11 @@
                     const main = p.variaciones[0];
                     return `
                     <div class="bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 flex flex-col cursor-pointer relative group transition-transform hover:-translate-y-1" onclick="openModal('${p.id}')">
-                        <div class="w-full aspect-square relative bg-gray-50 overflow-hidden">
+                        <div class="w-full aspect-square relative bg-white overflow-hidden">
                             <img src="${main.imgs[0]}" loading="lazy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                             <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[9px] font-black uppercase text-fv-orange shadow-sm border border-gray-100">${p.tipo}</div>
                         </div>
-                        <div class="p-4 flex flex-col flex-grow bg-white z-10 border-t border-gray-100">
+                        <div class="p-4 flex flex-col flex-grow bg-white z-10 border-t border-gray-50">
                             <h3 class="font-black text-[12px] text-fv-blue leading-tight mb-2 h-8 line-clamp-2 uppercase">${p.nombre}</h3>
                             <div class="mt-auto flex justify-between items-center pt-2">
                                 <p class="text-[15px] font-black text-fv-blue">${formatMoney(main.precio)}</p>
@@ -369,6 +403,7 @@
             }
         }
 
+        // --- LÓGICA DE APERTURA Y FILTROS ANIDADOS ---
         function openModal(groupId) {
             selectedGroup = allGroups.find(p => p.id === groupId);
             if(!selectedGroup) return;
