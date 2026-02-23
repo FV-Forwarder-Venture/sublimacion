@@ -54,7 +54,7 @@
             </div>
         </section>
 
-        <div class="p-6 border-b border-gray-100 sticky top-[80px] bg-white z-40">
+        <div class="p-6 border-b border-gray-100 sticky top-[80px] bg-white z-40 shadow-sm">
             <div class="flex flex-col md:flex-row gap-4 justify-between items-center">
                 <nav id="category-nav" class="flex gap-2 overflow-x-auto w-full md:w-auto hide-scrollbar pb-1"></nav>
                 
@@ -110,12 +110,12 @@
                 <h2 id="modal-title" class="text-xl md:text-2xl font-black text-fv-blue mt-1 mb-4 leading-tight uppercase"></h2>
                 
                 <div id="variant-section" class="mb-4 hidden">
-                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Opciones Principales:</label>
+                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Opciones:</label>
                     <div id="variant-container" class="flex flex-wrap gap-2"></div>
                 </div>
 
                 <div id="extra-section" class="mb-6 hidden">
-                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Detalles Adicionales:</label>
+                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Detalles:</label>
                     <div id="extra-container" class="flex flex-wrap gap-2"></div>
                 </div>
 
@@ -166,29 +166,35 @@
         let allGroups = [];
         let cart = [];
         let currentCategory = 'Ver Todo';
-        
         let selectedGroup = null;
         let selectedVariant = null;
         let currentVariable = null; 
         let currentExtra = null; 
-        
-        let searchTimeout = null;
+        let searchTimeout = null; 
 
-        // FORMATO PERFECTO: $ 10.000
+        // 1. FORMATO DE MONEDA PERFECTO
         function formatMoney(amount) {
-            return '$ ' + amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            return new Intl.NumberFormat('es-CO', { 
+                style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 
+            }).format(amount);
         }
 
-        // LIMPIADOR ULTRA-AVANZADO PARA BÚSQUEDAS (Elimina tildes y mayúsculas)
-        function normalizeStr(str) {
-            if (!str) return '';
-            return str.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        // 2. FUNCIÓN DE NORMALIZACIÓN AVANZADA (Para el Buscador)
+        function cleanTextForSearch(text) {
+            if (!text) return '';
+            return text.toString()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quita tildes
+                .toLowerCase() // Minusculas
+                .trim(); 
         }
 
-        // LIMPIADOR PARA VARIABLES (Evita botones duplicados)
-        function cleanVariant(str) {
-            if (!str) return '';
-            return str.toString().replace(/[\u200B-\u200D\uFEFF\xA0]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+        // 3. LIMPIEZA DE DATOS AGRESIVA (Para evitar duplicados)
+        function cleanDataField(text) {
+            if (!text) return '';
+            return text.toString()
+                .toUpperCase() // Todo a mayúsculas
+                .replace(/\s+/g, ' ') // Convierte doble espacio en uno solo
+                .trim(); // Quita espacios al inicio y final
         }
 
         function loadProducts() {
@@ -199,7 +205,9 @@
                     
                     results.data.forEach((row, index) => {
                         const sku = row['SKU']?.trim();
-                        const pSku = row['PARENT SKU']?.trim() || sku;
+                        // Limpieza del Parent SKU para agrupar correctamente
+                        const pSku = cleanDataField(row['PARENT SKU']) || cleanDataField(sku);
+                        
                         if (!sku) return;
 
                         let pStr = row['PRECIO DE VENTA']?.toString() || '0';
@@ -209,19 +217,21 @@
                         const rawImgs = row['IMAGEN']?.split('|').map(i => i.trim()).filter(i => i !== "") || [];
                         const imgs = rawImgs.length > 0 ? rawImgs : ['https://via.placeholder.com/400'];
 
-                        const safeVariable = cleanVariant(row['VARIABLE']);
-                        const safeExtra = cleanVariant(row['EXTRA']);
-
                         if (!tempGroups[pSku]) {
                             tempGroups[pSku] = {
                                 id: pSku,
-                                nombre: row['NOMBRE']?.trim() || 'Producto Sin Nombre',
-                                tipo: row['TIPO']?.trim() || 'General',
+                                nombre: row['NOMBRE']?.trim() || 'Producto',
+                                tipo: row['TIPO']?.trim() || 'Varios',
                                 index: index,
                                 skuMap: {}
                             };
                         }
 
+                        // APLICO LIMPIEZA AGRESIVA A LAS VARIABLES
+                        const safeVariable = cleanDataField(row['VARIABLE']);
+                        const safeExtra = cleanDataField(row['EXTRA']);
+
+                        // Lógica: Si el SKU ya existe, conserva el precio mayor
                         if (!tempGroups[pSku].skuMap[sku] || precioVenta > tempGroups[pSku].skuMap[sku].precio) {
                             tempGroups[pSku].skuMap[sku] = {
                                 sku: sku,
@@ -255,28 +265,22 @@
 
         function filterType(t) { currentCategory = t; updateCategoryNav(); applyFilters(); }
 
-        // BÚSQUEDA INTELIGENTE SIN RETRASOS
         function debounceSearch() {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(applyFilters, 250);
+            searchTimeout = setTimeout(applyFilters, 300);
         }
 
         function applyFilters() {
             const rawSearch = document.getElementById('search-input').value;
-            const searchTerms = normalizeStr(rawSearch).split(/\s+/).filter(term => term.length > 0);
+            const searchTerms = cleanTextForSearch(rawSearch).split(' ').filter(term => term.length > 0);
             const sortMode = document.getElementById('sort-select').value;
 
             let filtered = allGroups.filter(p => {
                 const matchType = currentCategory === 'Ver Todo' || p.tipo === currentCategory;
                 
-                // Unimos todos los textos posibles del producto para la búsqueda
-                let textToSearch = p.nombre + " " + p.tipo;
-                p.variaciones.forEach(v => {
-                    textToSearch += " " + v.variable + " " + v.extra + " " + v.sku;
-                });
-                
-                const combinedText = normalizeStr(textToSearch);
-                const matchSearch = searchTerms.every(term => combinedText.includes(term));
+                // Búsqueda normalizada (Sin tildes)
+                const searchableText = cleanTextForSearch(p.nombre + " " + p.tipo + " " + p.variaciones.map(v => v.variable + " " + v.extra).join(" "));
+                const matchSearch = searchTerms.every(term => searchableText.includes(term));
                 
                 return matchType && matchSearch;
             });
@@ -297,7 +301,6 @@
                 return;
             }
 
-            // CARGA PEREZOSA (loading="lazy") APLICADA A IMÁGENES
             grid.innerHTML = products.map(p => {
                 const main = p.variaciones[0];
                 return `
@@ -307,16 +310,12 @@
                         <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[9px] font-black uppercase text-fv-orange shadow-sm border border-gray-50">${p.tipo}</div>
                     </div>
                     <div class="p-4 flex flex-col flex-grow bg-white z-10">
-                        <h3 class="font-black text-[12px] text-fv-blue leading-tight mb-2 h-8 line-clamp-2 uppercase">${p.nombre}</h3>
+                        <h3 class="font-black text-[12px] text-fv-blue leading-tight mb-2 h-8 line-clamp-2">${p.nombre}</h3>
                         <div class="mt-auto flex justify-between items-center pt-3 border-t border-gray-50">
                             <p class="text-[15px] font-black text-fv-blue">${formatMoney(main.precio)}</p>
                             <div class="flex gap-2">
-                                <button onclick="quickShare(event, '${p.id}')" class="w-9 h-9 bg-[#F0FDF4] text-[#16A34A] rounded-xl flex items-center justify-center hover:bg-green-100 transition shadow-sm">
-                                    <i class="fa-brands fa-whatsapp text-lg"></i>
-                                </button>
-                                <button onclick="quickAdd(event, '${p.id}')" class="w-9 h-9 bg-[#0F172A] text-white rounded-xl flex items-center justify-center hover:bg-fv-blue transition shadow-sm">
-                                    <i class="fa-solid fa-plus text-lg"></i>
-                                </button>
+                                <button onclick="quickShare(event, '${p.id}')" class="w-9 h-9 bg-[#F0FDF4] text-[#16A34A] rounded-xl flex items-center justify-center hover:bg-green-100 transition shadow-sm"><i class="fa-brands fa-whatsapp text-lg"></i></button>
+                                <button onclick="quickAdd(event, '${p.id}')" class="w-9 h-9 bg-[#0F172A] text-white rounded-xl flex items-center justify-center hover:bg-fv-blue transition shadow-sm"><i class="fa-solid fa-plus text-lg"></i></button>
                             </div>
                         </div>
                     </div>
@@ -324,7 +323,7 @@
             }).join('');
         }
 
-        // --- LÓGICA DE APERTURA Y FILTROS ANIDADOS EXACTOS ---
+        // LÓGICA DE APERTURA Y FILTROS ANIDADOS
         function openModal(groupId) {
             selectedGroup = allGroups.find(p => p.id === groupId);
             if(!selectedGroup) return;
@@ -345,7 +344,6 @@
 
         function selectVariable(v) {
             currentVariable = v;
-            // Filtro Inteligente: Verifica qué extras están disponibles para esta nueva variable
             const validExtras = selectedGroup.variaciones
                 .filter(varObj => varObj.variable === currentVariable)
                 .map(varObj => varObj.extra);
@@ -362,7 +360,6 @@
         }
 
         function updateVariantSelectionUI() {
-            // Buscamos la variante exacta
             let variant = selectedGroup.variaciones.find(v => v.variable === currentVariable && v.extra === currentExtra);
             if (!variant) variant = selectedGroup.variaciones.find(v => v.variable === currentVariable);
             selectedVariant = variant || selectedGroup.variaciones[0];
@@ -372,7 +369,6 @@
             document.getElementById('modal-img').src = selectedVariant.imgs[0];
             document.getElementById('modal-price').innerText = formatMoney(selectedVariant.precio);
 
-            // Galería
             const gallery = document.getElementById('modal-gallery');
             if(selectedVariant.imgs.length > 1) {
                 gallery.classList.remove('hidden');
@@ -382,7 +378,6 @@
                     </div>`).join('');
             } else gallery.classList.add('hidden');
 
-            // Botones VARIABLE (El Set elimina duplicados automáticamente)
             const uniqueVars = [...new Set(selectedGroup.variaciones.map(v => v.variable).filter(v => v !== ''))];
             const vSection = document.getElementById('variant-section');
             if (uniqueVars.length > 0) {
@@ -391,7 +386,6 @@
                     <button onclick="selectVariable('${v}')" class="variant-btn ${v === currentVariable ? 'active' : ''}">${v}</button>`).join('');
             } else vSection.classList.add('hidden');
 
-            // Botones EXTRA (Dependientes de la Variable actual)
             const availableExtras = [...new Set(selectedGroup.variaciones
                 .filter(v => v.variable === currentVariable)
                 .map(v => v.extra)
@@ -419,7 +413,6 @@
             window.history.pushState({}, '', window.location.pathname);
         }
 
-        // FUNCIONES CON PREVENCIÓN DE APERTURA DE MODAL
         function quickAdd(event, groupId) {
             event.stopPropagation();
             const g = allGroups.find(p => p.id === groupId);
@@ -431,9 +424,7 @@
 
         function addToCartFromModal() {
             if(!cart.find(c => c.sku === selectedVariant.sku)) cart.push({ ...selectedVariant, nombre: selectedGroup.nombre });
-            updateCartUI(); 
-            closeModal();
-            showToast();
+            updateCartUI(); closeModal(); showToast();
         }
 
         function quickShare(event, groupId) {
@@ -493,7 +484,7 @@
 
         function sendOrderWhatsApp() {
             if(cart.length === 0) return;
-            let msg = `🛒 *PEDIDO - FORWARDER VENTURE*%0A%0AHola, deseo cotizar los siguientes productos de Tecnología y Hogar:%0A%0A`;
+            let msg = `🛒 *PEDIDO - FORWARDER VENTURE*%0A%0AHola, deseo cotizar los siguientes productos:%0A%0A`;
             
             cart.forEach(item => {
                 let varLabels = [];
@@ -505,7 +496,7 @@
             });
             
             const total = cart.reduce((acc, i) => acc + i.precio, 0);
-            msg += `%0A*TOTAL ESTIMADO (S/IVA): ${formatMoney(total)}*%0A%0A_Favor confirmar disponibilidad._`;
+            msg += `%0A*TOTAL ESTIMADO (S/IVA): ${formatMoney(total)}*%0A%0A_Precios antes de IVA. Favor confirmar disponibilidad._`;
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
         }
 
