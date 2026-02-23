@@ -30,11 +30,12 @@
         .variant-btn { border: 2px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; transition: all 0.2s; cursor: pointer; text-transform: uppercase; color: #4b5563; }
         .variant-btn.active { border-color: #002e5f; background-color: #002e5f; color: white; }
 
+        /* Animaciones */
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
         
-        /* Loader del Infinite Scroll */
-        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #002e5f; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 20px auto; }
+        /* Spinner de Carga Inifita */
+        .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #002e5f; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -85,8 +86,10 @@
         <main class="p-6 md:p-10 flex-grow bg-gray-50/50 pb-20">
             <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
                 </div>
-            <div id="scroll-loader" class="hidden">
+            
+            <div id="scroll-loader" class="hidden w-full pt-10">
                 <div class="loader"></div>
+                <p class="text-center text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Cargando más productos...</p>
             </div>
         </main>
 
@@ -106,24 +109,24 @@
         <div class="bg-white w-full max-w-xl rounded-3xl overflow-hidden relative shadow-2xl transform scale-95 transition-all flex flex-col max-h-[95vh]" id="product-modal-content">
             <button onclick="closeModal()" class="absolute top-4 right-4 w-10 h-10 bg-black/5 rounded-full flex items-center justify-center transition hover:bg-black/10 text-gray-800 z-20"><i class="fa-solid fa-xmark text-xl"></i></button>
             
-            <div class="bg-white border-b border-gray-100 p-6 flex flex-col items-center shrink-0">
+            <div class="bg-gray-100 border-b border-gray-100 p-6 flex flex-col items-center shrink-0">
                 <div class="h-48 md:h-64 flex items-center justify-center w-full relative">
-                    <img id="modal-img" src="" class="max-h-full max-w-full object-contain">
+                    <img id="modal-img" src="" class="max-h-full max-w-full object-contain drop-shadow-md">
                 </div>
                 <div id="modal-gallery" class="flex gap-2 mt-4 overflow-x-auto w-full justify-center hide-scrollbar p-2"></div>
             </div>
 
-            <div class="p-6 md:p-8 overflow-y-auto flex-grow">
+            <div class="p-6 md:p-8 overflow-y-auto flex-grow bg-white">
                 <span id="modal-type" class="text-orange-600 font-black text-[10px] uppercase tracking-widest"></span>
                 <h2 id="modal-title" class="text-xl md:text-2xl font-black text-fv-blue mt-1 mb-4 leading-tight uppercase"></h2>
                 
                 <div id="variant-section" class="mb-4 hidden">
-                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Opciones Principales:</label>
+                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Opciones:</label>
                     <div id="variant-container" class="flex flex-wrap gap-2"></div>
                 </div>
 
                 <div id="extra-section" class="mb-6 hidden">
-                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Detalles / Colores:</label>
+                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Detalles/Colores:</label>
                     <div id="extra-container" class="flex flex-wrap gap-2"></div>
                 </div>
 
@@ -172,7 +175,7 @@
         const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
         let allGroups = [];
-        let filteredGroups = []; // Array filtrado para el paginador
+        let filteredGroups = [];
         let cart = [];
         let currentCategory = 'Ver Todo';
         
@@ -181,29 +184,31 @@
         let currentVariable = null; 
         let currentExtra = null; 
         
-        let searchTimeout = null; 
-        
-        // Variables para Infinite Scroll
+        // Paginación 
         let currentStartIndex = 0;
-        const itemsPerPage = 20;
+        const ITEMS_PER_PAGE = 50;
+        let searchTimeout = null; 
 
         function formatMoney(amount) {
-            return new Intl.NumberFormat('es-CO', { 
-                style: 'currency', 
-                currency: 'COP', 
-                minimumFractionDigits: 0, 
-                maximumFractionDigits: 0 
-            }).format(amount);
+            return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
         }
 
-        // LIMPIEZA EXTREMA PARA BUSCADOR (Sábanas = sabanas)
-        function cleanTextForSearch(text) {
+        // LIMPIADOR AVANZADO PARA TEXTOS Y VARIABLES (Evita duplicados falsos)
+        function superClean(text) {
             if (!text) return '';
             return text.toString()
-                .toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remueve tildes
-                .replace(/[^a-z0-9\s]/g, '') // Remueve símbolos raros
-                .trim(); 
+                .replace(/[\u200B-\u200D\uFEFF]/g, '') // Elimina espacios invisibles 
+                .replace(/\s+/g, ' ') // Elimina saltos de línea y espacios dobles
+                .trim()
+                .toUpperCase();
+        }
+
+        // DESTRUCTOR DE TILDES PARA EL BUSCADOR
+        function removeAccentsAndLower(text) {
+            if (!text) return '';
+            return text.toString()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase();
         }
 
         function loadProducts() {
@@ -213,10 +218,14 @@
                     const tempGroups = {};
                     
                     results.data.forEach((row, index) => {
-                        const sku = row['SKU']?.trim();
-                        if (!sku) return;
-
-                        const pSku = row['PARENT SKU']?.trim() || sku;
+                        const sku = row['SKU']?.toString().trim();
+                        
+                        // EVITAR EL "PRODUCTO GIGANTE": Si no hay Parent SKU ni SKU, le asignamos un ID único por fila
+                        let pSku = row['PARENT SKU']?.toString().trim();
+                        if(!pSku) pSku = sku || `FILA-SIN-SKU-${index}`;
+                        
+                        // Si la fila está completamente vacía de nombre y sku, saltarla
+                        if (!row['NOMBRE'] && !sku) return;
 
                         let pStr = row['PRECIO DE VENTA']?.toString() || '0';
                         pStr = pStr.replace(/[,.]\d{1,2}$/, ''); 
@@ -228,34 +237,38 @@
                         if (!tempGroups[pSku]) {
                             tempGroups[pSku] = {
                                 id: pSku,
-                                nombre: row['NOMBRE']?.trim() || 'Producto',
-                                tipo: row['TIPO']?.trim() || 'Varios',
+                                nombre: row['NOMBRE']?.trim() || 'Producto sin nombre',
+                                tipo: row['TIPO']?.trim() || 'General',
                                 index: index,
-                                variaciones: []
+                                skuMap: {}
                             };
                         }
 
-                        // Limpieza de Variables para agrupar idénticos (ej. " King " == "KING")
-                        const safeVariable = (row['VARIABLE'] || '').toString().trim().toUpperCase();
-                        const safeExtra = (row['EXTRA'] || '').toString().trim().toUpperCase();
+                        const safeVariable = superClean(row['VARIABLE']);
+                        const safeExtra = superClean(row['EXTRA']);
 
-                        tempGroups[pSku].variaciones.push({
-                            sku: sku,
-                            variable: safeVariable,
-                            extra: safeExtra,
-                            imgs: imgs,
-                            precio: precioVenta
-                        });
+                        // Garantía de Margen: Guardar si es nuevo, o sobreescribir si el precio de venta es MAYOR
+                        if (!tempGroups[pSku].skuMap[sku] || precioVenta > tempGroups[pSku].skuMap[sku].precio) {
+                            tempGroups[pSku].skuMap[sku] = {
+                                sku: sku,
+                                variable: safeVariable,
+                                extra: safeExtra,
+                                imgs: imgs,
+                                precio: precioVenta
+                            };
+                        }
                     });
 
-                    // Convertir el objeto a Array
-                    allGroups = Object.values(tempGroups);
-                    
+                    allGroups = Object.values(tempGroups).map(group => ({
+                        ...group,
+                        variaciones: Object.values(group.skuMap)
+                    }));
+
                     updateCategoryNav();
                     applyFilters();
                     checkUrlForProduct();
-                    
-                    // Configurar el listener de Scroll
+
+                    // Activar el sensor de scroll infinito
                     window.addEventListener('scroll', handleScroll);
                 }
             });
@@ -269,11 +282,7 @@
             }).join('');
         }
 
-        function filterType(t) { 
-            currentCategory = t; 
-            updateCategoryNav(); 
-            applyFilters(); 
-        }
+        function filterType(t) { currentCategory = t; updateCategoryNav(); applyFilters(); }
 
         function debounceSearch() {
             clearTimeout(searchTimeout);
@@ -282,32 +291,32 @@
 
         function applyFilters() {
             const rawSearch = document.getElementById('search-input').value;
-            const searchTerms = cleanTextForSearch(rawSearch).split(' ').filter(term => term.length > 0);
+            const searchTerms = removeAccentsAndLower(rawSearch).split(' ').filter(t => t.length > 0);
             const sortMode = document.getElementById('sort-select').value;
 
             filteredGroups = allGroups.filter(p => {
                 const matchType = currentCategory === 'Ver Todo' || p.tipo === currentCategory;
                 
-                // Buscar en todos los campos relevantes (sin tildes)
-                const searchableText = cleanTextForSearch(p.nombre + " " + p.tipo + " " + p.variaciones.map(v => v.variable + " " + v.extra).join(" "));
-                const matchSearch = searchTerms.every(term => searchableText.includes(term));
+                // Buscar coincidencia ignorando tildes y mayúsculas
+                const searchText = removeAccentsAndLower(p.nombre + " " + p.tipo + " " + p.variaciones.map(v => v.variable + " " + v.extra).join(" "));
+                const matchSearch = searchTerms.every(term => searchText.includes(term));
                 
                 return matchType && matchSearch;
             });
 
+            // Ordenamiento
             if (sortMode === 'asc') filteredGroups.sort((a, b) => a.variaciones[0].precio - b.variaciones[0].precio);
             else if (sortMode === 'desc') filteredGroups.sort((a, b) => b.variaciones[0].precio - a.variaciones[0].precio);
             else if (sortMode === 'az') filteredGroups.sort((a, b) => a.nombre.localeCompare(b.nombre));
             else if (sortMode === 'za') filteredGroups.sort((a, b) => b.nombre.localeCompare(a.nombre));
             else if (sortMode === 'recent') filteredGroups.sort((a, b) => b.index - a.index);
 
-            // Reiniciar Paginación
+            // Reiniciar scroll infinito
             currentStartIndex = 0;
             document.getElementById('product-grid').innerHTML = ''; 
             loadMoreProducts();
         }
 
-        // FUNCIÓN INFINITE SCROLL (Carga de 20 en 20)
         function loadMoreProducts() {
             const grid = document.getElementById('product-grid');
             const loader = document.getElementById('scroll-loader');
@@ -318,25 +327,30 @@
                 return;
             }
 
-            const end = currentStartIndex + itemsPerPage;
+            const end = currentStartIndex + ITEMS_PER_PAGE;
             const sliceToRender = filteredGroups.slice(currentStartIndex, end);
             
             if (sliceToRender.length > 0) {
+                // IMÁGENES DEL MISMO TAMAÑO: object-cover + aspect-square fuerza cuadrados matemáticamente perfectos
                 const html = sliceToRender.map(p => {
                     const main = p.variaciones[0];
                     return `
                     <div class="bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 flex flex-col cursor-pointer relative group transition-transform hover:-translate-y-1" onclick="openModal('${p.id}')">
-                        <div class="aspect-square p-2 bg-white flex items-center justify-center relative">
-                            <img src="${main.imgs[0]}" loading="lazy" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-500">
-                            <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[9px] font-black uppercase text-fv-orange shadow-sm border border-gray-50">${p.tipo}</div>
+                        <div class="w-full aspect-square relative bg-gray-50 overflow-hidden">
+                            <img src="${main.imgs[0]}" loading="lazy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[9px] font-black uppercase text-fv-orange shadow-sm border border-gray-100">${p.tipo}</div>
                         </div>
-                        <div class="p-4 flex flex-col flex-grow bg-white z-10">
-                            <h3 class="font-black text-[12px] text-fv-blue leading-tight mb-2 h-8 line-clamp-2">${p.nombre}</h3>
-                            <div class="mt-auto flex justify-between items-center pt-3 border-t border-gray-50">
+                        <div class="p-4 flex flex-col flex-grow bg-white z-10 border-t border-gray-100">
+                            <h3 class="font-black text-[12px] text-fv-blue leading-tight mb-2 h-8 line-clamp-2 uppercase">${p.nombre}</h3>
+                            <div class="mt-auto flex justify-between items-center pt-2">
                                 <p class="text-[15px] font-black text-fv-blue">${formatMoney(main.precio)}</p>
                                 <div class="flex gap-2">
-                                    <button onclick="quickShare(event, '${p.id}')" class="w-9 h-9 bg-[#F0FDF4] text-[#16A34A] rounded-xl flex items-center justify-center hover:bg-green-100 transition shadow-sm"><i class="fa-brands fa-whatsapp text-lg"></i></button>
-                                    <button onclick="quickAdd(event, '${p.id}')" class="w-9 h-9 bg-[#0F172A] text-white rounded-xl flex items-center justify-center hover:bg-fv-blue transition shadow-sm"><i class="fa-solid fa-plus text-lg"></i></button>
+                                    <button onclick="quickShare(event, '${p.id}')" class="w-9 h-9 bg-[#F0FDF4] text-[#16A34A] rounded-xl flex items-center justify-center hover:bg-green-100 transition shadow-sm">
+                                        <i class="fa-brands fa-whatsapp text-lg"></i>
+                                    </button>
+                                    <button onclick="quickAdd(event, '${p.id}')" class="w-9 h-9 bg-[#0F172A] text-white rounded-xl flex items-center justify-center hover:bg-fv-blue transition shadow-sm">
+                                        <i class="fa-solid fa-plus text-lg"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -348,23 +362,23 @@
             }
 
             if (currentStartIndex >= filteredGroups.length) {
-                loader.classList.add('hidden'); // Ya no hay más por cargar
+                loader.classList.add('hidden');
             } else {
-                loader.classList.remove('hidden'); // Muestra el loader si quedan productos
+                loader.classList.remove('hidden');
             }
         }
 
-        // DETECTAR EL SCROLL AL FINAL DE LA PÁGINA
         function handleScroll() {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
-                // Si faltan menos de 500px para el final, carga más
+            // Si el usuario está a 800px del fondo de la página, carga los siguientes 50
+            const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+            if (scrollTop + clientHeight >= scrollHeight - 800) {
                 if (currentStartIndex < filteredGroups.length) {
                     loadMoreProducts();
                 }
             }
         }
 
-        // --- LÓGICA DE APERTURA Y FILTROS ANIDADOS ---
+        // --- LÓGICA DE APERTURA Y FILTROS ANIDADOS (CERO DUPLICADOS) ---
         function openModal(groupId) {
             selectedGroup = allGroups.find(p => p.id === groupId);
             if(!selectedGroup) return;
@@ -385,13 +399,8 @@
 
         function selectVariable(v) {
             currentVariable = v;
-            const validExtras = selectedGroup.variaciones
-                .filter(varObj => varObj.variable === currentVariable)
-                .map(varObj => varObj.extra);
-            
-            if (!validExtras.includes(currentExtra)) {
-                currentExtra = validExtras[0] || '';
-            }
+            const validExtras = selectedGroup.variaciones.filter(varObj => varObj.variable === currentVariable).map(varObj => varObj.extra);
+            if (!validExtras.includes(currentExtra)) currentExtra = validExtras[0] || '';
             updateVariantSelectionUI();
         }
 
@@ -419,7 +428,6 @@
                     </div>`).join('');
             } else gallery.classList.add('hidden');
 
-            // Set crea una lista única de Variables
             const uniqueVars = [...new Set(selectedGroup.variaciones.map(v => v.variable).filter(v => v !== ''))];
             const vSection = document.getElementById('variant-section');
             if (uniqueVars.length > 0) {
@@ -428,12 +436,7 @@
                     <button onclick="selectVariable('${v}')" class="variant-btn ${v === currentVariable ? 'active' : ''}">${v}</button>`).join('');
             } else vSection.classList.add('hidden');
 
-            // Set crea una lista única de Extras DEPENDIENDO de la variable seleccionada
-            const availableExtras = [...new Set(selectedGroup.variaciones
-                .filter(v => v.variable === currentVariable)
-                .map(v => v.extra)
-                .filter(e => e !== ''))];
-                
+            const availableExtras = [...new Set(selectedGroup.variaciones.filter(v => v.variable === currentVariable).map(v => v.extra).filter(e => e !== ''))];
             const eSection = document.getElementById('extra-section');
             if (availableExtras.length > 0) {
                 eSection.classList.remove('hidden');
@@ -496,7 +499,6 @@
             let total = 0;
             container.innerHTML = cart.map((item, i) => {
                 total += item.precio;
-                
                 let varLabels = [];
                 if(item.variable) varLabels.push(item.variable);
                 if(item.extra) varLabels.push(item.extra);
@@ -504,7 +506,7 @@
 
                 return `
                 <div class="flex gap-4 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
-                    <img src="${item.imgs[0]}" class="w-16 h-16 object-contain rounded-xl bg-gray-50">
+                    <img src="${item.imgs[0]}" class="w-16 h-16 object-cover rounded-xl bg-gray-50">
                     <div class="flex-grow">
                         <p class="font-black text-[10px] text-fv-blue uppercase line-clamp-1">${item.nombre}</p>
                         <p class="text-[9px] text-gray-400 uppercase font-bold">${tagStr}</p>
