@@ -32,6 +32,10 @@
 
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
+        
+        /* Loader del Infinite Scroll */
+        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #002e5f; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-gray-900">
@@ -79,7 +83,11 @@
         </div>
 
         <main class="p-6 md:p-10 flex-grow bg-gray-50/50 pb-20">
-            <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6"></div>
+            <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+                </div>
+            <div id="scroll-loader" class="hidden">
+                <div class="loader"></div>
+            </div>
         </main>
 
         <footer class="bg-gray-900 text-white py-14 px-6 border-t-4 border-orange-600 mt-auto text-center">
@@ -110,12 +118,12 @@
                 <h2 id="modal-title" class="text-xl md:text-2xl font-black text-fv-blue mt-1 mb-4 leading-tight uppercase"></h2>
                 
                 <div id="variant-section" class="mb-4 hidden">
-                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Opciones:</label>
+                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Opciones Principales:</label>
                     <div id="variant-container" class="flex flex-wrap gap-2"></div>
                 </div>
 
                 <div id="extra-section" class="mb-6 hidden">
-                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Detalles:</label>
+                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Detalles / Colores:</label>
                     <div id="extra-container" class="flex flex-wrap gap-2"></div>
                 </div>
 
@@ -164,37 +172,38 @@
         const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
         let allGroups = [];
+        let filteredGroups = []; // Array filtrado para el paginador
         let cart = [];
         let currentCategory = 'Ver Todo';
+        
         let selectedGroup = null;
         let selectedVariant = null;
         let currentVariable = null; 
         let currentExtra = null; 
+        
         let searchTimeout = null; 
+        
+        // Variables para Infinite Scroll
+        let currentStartIndex = 0;
+        const itemsPerPage = 20;
 
-        // 1. FORMATO DE MONEDA PERFECTO
         function formatMoney(amount) {
             return new Intl.NumberFormat('es-CO', { 
-                style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 
+                style: 'currency', 
+                currency: 'COP', 
+                minimumFractionDigits: 0, 
+                maximumFractionDigits: 0 
             }).format(amount);
         }
 
-        // 2. FUNCIÓN DE NORMALIZACIÓN AVANZADA (Para el Buscador)
+        // LIMPIEZA EXTREMA PARA BUSCADOR (Sábanas = sabanas)
         function cleanTextForSearch(text) {
             if (!text) return '';
             return text.toString()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quita tildes
-                .toLowerCase() // Minusculas
+                .toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remueve tildes
+                .replace(/[^a-z0-9\s]/g, '') // Remueve símbolos raros
                 .trim(); 
-        }
-
-        // 3. LIMPIEZA DE DATOS AGRESIVA (Para evitar duplicados)
-        function cleanDataField(text) {
-            if (!text) return '';
-            return text.toString()
-                .toUpperCase() // Todo a mayúsculas
-                .replace(/\s+/g, ' ') // Convierte doble espacio en uno solo
-                .trim(); // Quita espacios al inicio y final
         }
 
         function loadProducts() {
@@ -205,10 +214,9 @@
                     
                     results.data.forEach((row, index) => {
                         const sku = row['SKU']?.trim();
-                        // Limpieza del Parent SKU para agrupar correctamente
-                        const pSku = cleanDataField(row['PARENT SKU']) || cleanDataField(sku);
-                        
                         if (!sku) return;
+
+                        const pSku = row['PARENT SKU']?.trim() || sku;
 
                         let pStr = row['PRECIO DE VENTA']?.toString() || '0';
                         pStr = pStr.replace(/[,.]\d{1,2}$/, ''); 
@@ -223,34 +231,32 @@
                                 nombre: row['NOMBRE']?.trim() || 'Producto',
                                 tipo: row['TIPO']?.trim() || 'Varios',
                                 index: index,
-                                skuMap: {}
+                                variaciones: []
                             };
                         }
 
-                        // APLICO LIMPIEZA AGRESIVA A LAS VARIABLES
-                        const safeVariable = cleanDataField(row['VARIABLE']);
-                        const safeExtra = cleanDataField(row['EXTRA']);
+                        // Limpieza de Variables para agrupar idénticos (ej. " King " == "KING")
+                        const safeVariable = (row['VARIABLE'] || '').toString().trim().toUpperCase();
+                        const safeExtra = (row['EXTRA'] || '').toString().trim().toUpperCase();
 
-                        // Lógica: Si el SKU ya existe, conserva el precio mayor
-                        if (!tempGroups[pSku].skuMap[sku] || precioVenta > tempGroups[pSku].skuMap[sku].precio) {
-                            tempGroups[pSku].skuMap[sku] = {
-                                sku: sku,
-                                variable: safeVariable,
-                                extra: safeExtra,
-                                imgs: imgs,
-                                precio: precioVenta
-                            };
-                        }
+                        tempGroups[pSku].variaciones.push({
+                            sku: sku,
+                            variable: safeVariable,
+                            extra: safeExtra,
+                            imgs: imgs,
+                            precio: precioVenta
+                        });
                     });
 
-                    allGroups = Object.values(tempGroups).map(group => ({
-                        ...group,
-                        variaciones: Object.values(group.skuMap)
-                    }));
-
+                    // Convertir el objeto a Array
+                    allGroups = Object.values(tempGroups);
+                    
                     updateCategoryNav();
                     applyFilters();
                     checkUrlForProduct();
+                    
+                    // Configurar el listener de Scroll
+                    window.addEventListener('scroll', handleScroll);
                 }
             });
         }
@@ -263,7 +269,11 @@
             }).join('');
         }
 
-        function filterType(t) { currentCategory = t; updateCategoryNav(); applyFilters(); }
+        function filterType(t) { 
+            currentCategory = t; 
+            updateCategoryNav(); 
+            applyFilters(); 
+        }
 
         function debounceSearch() {
             clearTimeout(searchTimeout);
@@ -275,55 +285,86 @@
             const searchTerms = cleanTextForSearch(rawSearch).split(' ').filter(term => term.length > 0);
             const sortMode = document.getElementById('sort-select').value;
 
-            let filtered = allGroups.filter(p => {
+            filteredGroups = allGroups.filter(p => {
                 const matchType = currentCategory === 'Ver Todo' || p.tipo === currentCategory;
                 
-                // Búsqueda normalizada (Sin tildes)
+                // Buscar en todos los campos relevantes (sin tildes)
                 const searchableText = cleanTextForSearch(p.nombre + " " + p.tipo + " " + p.variaciones.map(v => v.variable + " " + v.extra).join(" "));
                 const matchSearch = searchTerms.every(term => searchableText.includes(term));
                 
                 return matchType && matchSearch;
             });
 
-            if (sortMode === 'asc') filtered.sort((a, b) => a.variaciones[0].precio - b.variaciones[0].precio);
-            else if (sortMode === 'desc') filtered.sort((a, b) => b.variaciones[0].precio - a.variaciones[0].precio);
-            else if (sortMode === 'az') filtered.sort((a, b) => a.nombre.localeCompare(b.nombre));
-            else if (sortMode === 'za') filtered.sort((a, b) => b.nombre.localeCompare(a.nombre));
-            else if (sortMode === 'recent') filtered.sort((a, b) => b.index - a.index);
+            if (sortMode === 'asc') filteredGroups.sort((a, b) => a.variaciones[0].precio - b.variaciones[0].precio);
+            else if (sortMode === 'desc') filteredGroups.sort((a, b) => b.variaciones[0].precio - a.variaciones[0].precio);
+            else if (sortMode === 'az') filteredGroups.sort((a, b) => a.nombre.localeCompare(b.nombre));
+            else if (sortMode === 'za') filteredGroups.sort((a, b) => b.nombre.localeCompare(a.nombre));
+            else if (sortMode === 'recent') filteredGroups.sort((a, b) => b.index - a.index);
 
-            renderGrid(filtered);
+            // Reiniciar Paginación
+            currentStartIndex = 0;
+            document.getElementById('product-grid').innerHTML = ''; 
+            loadMoreProducts();
         }
 
-        function renderGrid(products) {
+        // FUNCIÓN INFINITE SCROLL (Carga de 20 en 20)
+        function loadMoreProducts() {
             const grid = document.getElementById('product-grid');
-            if(products.length === 0) {
+            const loader = document.getElementById('scroll-loader');
+            
+            if (filteredGroups.length === 0 && currentStartIndex === 0) {
                 grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-400 font-bold">No se encontraron productos.</div>';
+                loader.classList.add('hidden');
                 return;
             }
 
-            grid.innerHTML = products.map(p => {
-                const main = p.variaciones[0];
-                return `
-                <div class="bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 flex flex-col cursor-pointer relative group transition-transform hover:-translate-y-1" onclick="openModal('${p.id}')">
-                    <div class="aspect-square p-2 bg-white flex items-center justify-center relative">
-                        <img src="${main.imgs[0]}" loading="lazy" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-500">
-                        <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[9px] font-black uppercase text-fv-orange shadow-sm border border-gray-50">${p.tipo}</div>
-                    </div>
-                    <div class="p-4 flex flex-col flex-grow bg-white z-10">
-                        <h3 class="font-black text-[12px] text-fv-blue leading-tight mb-2 h-8 line-clamp-2">${p.nombre}</h3>
-                        <div class="mt-auto flex justify-between items-center pt-3 border-t border-gray-50">
-                            <p class="text-[15px] font-black text-fv-blue">${formatMoney(main.precio)}</p>
-                            <div class="flex gap-2">
-                                <button onclick="quickShare(event, '${p.id}')" class="w-9 h-9 bg-[#F0FDF4] text-[#16A34A] rounded-xl flex items-center justify-center hover:bg-green-100 transition shadow-sm"><i class="fa-brands fa-whatsapp text-lg"></i></button>
-                                <button onclick="quickAdd(event, '${p.id}')" class="w-9 h-9 bg-[#0F172A] text-white rounded-xl flex items-center justify-center hover:bg-fv-blue transition shadow-sm"><i class="fa-solid fa-plus text-lg"></i></button>
+            const end = currentStartIndex + itemsPerPage;
+            const sliceToRender = filteredGroups.slice(currentStartIndex, end);
+            
+            if (sliceToRender.length > 0) {
+                const html = sliceToRender.map(p => {
+                    const main = p.variaciones[0];
+                    return `
+                    <div class="bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 flex flex-col cursor-pointer relative group transition-transform hover:-translate-y-1" onclick="openModal('${p.id}')">
+                        <div class="aspect-square p-2 bg-white flex items-center justify-center relative">
+                            <img src="${main.imgs[0]}" loading="lazy" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-500">
+                            <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[9px] font-black uppercase text-fv-orange shadow-sm border border-gray-50">${p.tipo}</div>
+                        </div>
+                        <div class="p-4 flex flex-col flex-grow bg-white z-10">
+                            <h3 class="font-black text-[12px] text-fv-blue leading-tight mb-2 h-8 line-clamp-2">${p.nombre}</h3>
+                            <div class="mt-auto flex justify-between items-center pt-3 border-t border-gray-50">
+                                <p class="text-[15px] font-black text-fv-blue">${formatMoney(main.precio)}</p>
+                                <div class="flex gap-2">
+                                    <button onclick="quickShare(event, '${p.id}')" class="w-9 h-9 bg-[#F0FDF4] text-[#16A34A] rounded-xl flex items-center justify-center hover:bg-green-100 transition shadow-sm"><i class="fa-brands fa-whatsapp text-lg"></i></button>
+                                    <button onclick="quickAdd(event, '${p.id}')" class="w-9 h-9 bg-[#0F172A] text-white rounded-xl flex items-center justify-center hover:bg-fv-blue transition shadow-sm"><i class="fa-solid fa-plus text-lg"></i></button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>`;
-            }).join('');
+                    </div>`;
+                }).join('');
+                
+                grid.insertAdjacentHTML('beforeend', html);
+                currentStartIndex = end;
+            }
+
+            if (currentStartIndex >= filteredGroups.length) {
+                loader.classList.add('hidden'); // Ya no hay más por cargar
+            } else {
+                loader.classList.remove('hidden'); // Muestra el loader si quedan productos
+            }
         }
 
-        // LÓGICA DE APERTURA Y FILTROS ANIDADOS
+        // DETECTAR EL SCROLL AL FINAL DE LA PÁGINA
+        function handleScroll() {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+                // Si faltan menos de 500px para el final, carga más
+                if (currentStartIndex < filteredGroups.length) {
+                    loadMoreProducts();
+                }
+            }
+        }
+
+        // --- LÓGICA DE APERTURA Y FILTROS ANIDADOS ---
         function openModal(groupId) {
             selectedGroup = allGroups.find(p => p.id === groupId);
             if(!selectedGroup) return;
@@ -378,6 +419,7 @@
                     </div>`).join('');
             } else gallery.classList.add('hidden');
 
+            // Set crea una lista única de Variables
             const uniqueVars = [...new Set(selectedGroup.variaciones.map(v => v.variable).filter(v => v !== ''))];
             const vSection = document.getElementById('variant-section');
             if (uniqueVars.length > 0) {
@@ -386,6 +428,7 @@
                     <button onclick="selectVariable('${v}')" class="variant-btn ${v === currentVariable ? 'active' : ''}">${v}</button>`).join('');
             } else vSection.classList.add('hidden');
 
+            // Set crea una lista única de Extras DEPENDIENDO de la variable seleccionada
             const availableExtras = [...new Set(selectedGroup.variaciones
                 .filter(v => v.variable === currentVariable)
                 .map(v => v.extra)
@@ -484,7 +527,7 @@
 
         function sendOrderWhatsApp() {
             if(cart.length === 0) return;
-            let msg = `🛒 *PEDIDO - FORWARDER VENTURE*%0A%0AHola, deseo cotizar los siguientes productos:%0A%0A`;
+            let msg = `🛒 *PEDIDO - FORWARDER VENTURE*%0A%0AHola, deseo cotizar los siguientes productos de Tecnología y Hogar:%0A%0A`;
             
             cart.forEach(item => {
                 let varLabels = [];
@@ -496,7 +539,7 @@
             });
             
             const total = cart.reduce((acc, i) => acc + i.precio, 0);
-            msg += `%0A*TOTAL ESTIMADO (S/IVA): ${formatMoney(total)}*%0A%0A_Precios antes de IVA. Favor confirmar disponibilidad._`;
+            msg += `%0A*TOTAL ESTIMADO (S/IVA): ${formatMoney(total)}*%0A%0A_Favor confirmar disponibilidad._`;
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
         }
 
