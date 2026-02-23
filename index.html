@@ -22,7 +22,7 @@
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         .banner-hero {
-            background: linear-gradient(90deg, rgba(0,46,95,0.9) 0%, rgba(0,46,95,0.7) 50%, rgba(0,46,95,0.3) 100%), 
+            background: linear-gradient(90deg, rgba(0,46,95,0.95) 0%, rgba(0,46,95,0.8) 50%, rgba(0,46,95,0.4) 100%), 
                         url('https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2070&auto=format&fit=crop');
             background-size: cover; background-position: center;
         }
@@ -54,7 +54,7 @@
             </div>
         </section>
 
-        <div class="p-6 border-b border-gray-100 sticky top-[80px] bg-white z-40">
+        <div class="p-6 border-b border-gray-100 sticky top-[80px] bg-white z-40 shadow-sm">
             <div class="flex flex-col md:flex-row gap-4 justify-between items-center">
                 <nav id="category-nav" class="flex gap-2 overflow-x-auto w-full md:w-auto hide-scrollbar pb-1"></nav>
                 
@@ -72,7 +72,7 @@
 
                     <div class="relative w-full md:w-72">
                         <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" id="search-input" oninput="applyFilters()" placeholder="Buscar producto..." class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-fv-blue">
+                        <input type="text" id="search-input" oninput="debounceSearch()" placeholder="Buscar producto..." class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-fv-blue">
                     </div>
                 </div>
             </div>
@@ -110,7 +110,7 @@
                 <h2 id="modal-title" class="text-xl md:text-2xl font-black text-fv-blue mt-1 mb-4 leading-tight uppercase"></h2>
                 
                 <div id="variant-section" class="mb-4 hidden">
-                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Opciones Principales:</label>
+                    <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Opciones:</label>
                     <div id="variant-container" class="flex flex-wrap gap-2"></div>
                 </div>
 
@@ -158,9 +158,9 @@
     </div>
 
     <script>
-        const WHATSAPP_NUMBER = '3183035997'; // Teléfono de Tecnología & Hogar
+        const WHATSAPP_NUMBER = '3183035997'; // Teléfono Tecnología y Hogar
         const SHEET_ID = '17a0Pxq1EOLRf86yiuM014ZluVqL2Qj1Mt8cKRDenjHc';
-        const GID = '0'; // GID de Tecnología y Hogar
+        const GID = '0'; // GID Tecnología y Hogar
         const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
         let allGroups = [];
@@ -171,8 +171,10 @@
         let selectedVariant = null;
         let currentVariable = null; 
         let currentExtra = null; 
+        
+        let searchTimeout = null; // Para el amortiguador del buscador
 
-        // FORMATEO DE MONEDA PERFECTO: $ 10.000
+        // FORMATO DE MONEDA IMPECABLE
         function formatMoney(amount) {
             return new Intl.NumberFormat('es-CO', { 
                 style: 'currency', 
@@ -180,6 +182,12 @@
                 minimumFractionDigits: 0, 
                 maximumFractionDigits: 0 
             }).format(amount);
+        }
+
+        // FUNCIÓN INTELIGENTE ANTI-TILDES
+        function normalizeText(text) {
+            if (!text) return '';
+            return text.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
         }
 
         function loadProducts() {
@@ -193,9 +201,9 @@
                         const pSku = row['PARENT SKU']?.trim() || sku;
                         if (!sku) return;
 
-                        // Lectura de Precio de Venta (Tecnología y Hogar usa esta columna)
+                        // Parseo robusto de precio
                         let pStr = row['PRECIO DE VENTA']?.toString() || '0';
-                        pStr = pStr.replace(/[,.]\d{2}$/, ''); 
+                        pStr = pStr.replace(/[,.]\d{1,2}$/, ''); // Quita decimales si existen
                         const precioVenta = parseInt(pStr.replace(/\D/g, '')) || 0;
 
                         const rawImgs = row['IMAGEN']?.split('|').map(i => i.trim()).filter(i => i !== "") || [];
@@ -204,19 +212,23 @@
                         if (!tempGroups[pSku]) {
                             tempGroups[pSku] = {
                                 id: pSku,
-                                nombre: row['NOMBRE'],
-                                tipo: row['TIPO'] || 'Varios',
+                                nombre: row['NOMBRE']?.trim() || 'Producto Sin Nombre',
+                                tipo: row['TIPO']?.trim() || 'Varios',
                                 index: index,
                                 skuMap: {}
                             };
                         }
 
-                        // Conservar precio más alto para proteger el margen
+                        // Limpieza drástica de Variable y Extra para evitar repetidos
+                        const safeVariable = (row['VARIABLE'] || '').toString().trim().toUpperCase();
+                        const safeExtra = (row['EXTRA'] || '').toString().trim().toUpperCase();
+
+                        // Guardar si no existe, o si existe pero el precio actual es MAYOR
                         if (!tempGroups[pSku].skuMap[sku] || precioVenta > tempGroups[pSku].skuMap[sku].precio) {
                             tempGroups[pSku].skuMap[sku] = {
                                 sku: sku,
-                                variable: row['VARIABLE']?.trim() || '',
-                                extra: row['EXTRA']?.trim() || '', // COLUMNA EXTRA
+                                variable: safeVariable,
+                                extra: safeExtra,
                                 imgs: imgs,
                                 precio: precioVenta
                             };
@@ -245,13 +257,24 @@
 
         function filterType(t) { currentCategory = t; updateCategoryNav(); applyFilters(); }
 
+        // BUSCADOR OPTIMIZADO
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(applyFilters, 300);
+        }
+
         function applyFilters() {
-            const search = document.getElementById('search-input').value.toLowerCase();
+            const rawSearch = document.getElementById('search-input').value;
+            const searchTerms = normalizeText(rawSearch).split(' ').filter(term => term.length > 0);
             const sortMode = document.getElementById('sort-select').value;
 
             let filtered = allGroups.filter(p => {
                 const matchType = currentCategory === 'Ver Todo' || p.tipo === currentCategory;
-                const matchSearch = p.nombre.toLowerCase().includes(search);
+                
+                // Búsqueda profunda en Nombre, Tipo, Variable y Extra
+                const combinedText = normalizeText(p.nombre + " " + p.tipo + " " + p.variaciones.map(v => v.variable + " " + v.extra).join(" "));
+                const matchSearch = searchTerms.every(term => combinedText.includes(term));
+                
                 return matchType && matchSearch;
             });
 
@@ -271,13 +294,13 @@
                 return;
             }
 
-            // DISEÑO LIMPIO IDENTICO A CAPTURAS
+            // APLICADA CARGA PEREZOSA (loading="lazy")
             grid.innerHTML = products.map(p => {
                 const main = p.variaciones[0];
                 return `
                 <div class="bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 flex flex-col cursor-pointer relative group transition-transform hover:-translate-y-1" onclick="openModal('${p.id}')">
                     <div class="aspect-square p-2 bg-white flex items-center justify-center relative">
-                        <img src="${main.imgs[0]}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-500">
+                        <img src="${main.imgs[0]}" loading="lazy" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-500">
                         <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[9px] font-black uppercase text-fv-orange shadow-sm border border-gray-50">${p.tipo}</div>
                     </div>
                     <div class="p-4 flex flex-col flex-grow bg-white z-10">
@@ -298,12 +321,11 @@
             }).join('');
         }
 
-        // --- LÓGICA DE APERTURA DE MODAL Y SELECCIONES ANIDADAS ---
+        // --- LÓGICA DE APERTURA Y FILTROS ANIDADOS (Cero duplicados) ---
         function openModal(groupId) {
             selectedGroup = allGroups.find(p => p.id === groupId);
             if(!selectedGroup) return;
             
-            // Asignar por defecto la primera variación existente
             currentVariable = selectedGroup.variaciones[0].variable;
             currentExtra = selectedGroup.variaciones[0].extra;
             
@@ -320,10 +342,11 @@
 
         function selectVariable(v) {
             currentVariable = v;
-            // Si cambia la variable, verificamos qué Extras existen para esa nueva selección
-            const validExtras = selectedGroup.variaciones.filter(varObj => varObj.variable === currentVariable).map(varObj => varObj.extra);
+            // Filtro inteligente: Ver qué extras están disponibles para esta nueva variable
+            const validExtras = selectedGroup.variaciones
+                .filter(varObj => varObj.variable === currentVariable)
+                .map(varObj => varObj.extra);
             
-            // Si el Extra actual no existe en esta nueva Variable, seleccionamos el primero que sí exista
             if (!validExtras.includes(currentExtra)) {
                 currentExtra = validExtras[0] || '';
             }
@@ -338,18 +361,15 @@
         function updateVariantSelectionUI() {
             // Buscamos la variante exacta
             let variant = selectedGroup.variaciones.find(v => v.variable === currentVariable && v.extra === currentExtra);
-            
-            // Fallback por seguridad
             if (!variant) variant = selectedGroup.variaciones.find(v => v.variable === currentVariable);
             selectedVariant = variant || selectedGroup.variaciones[0];
 
-            // 1. Textos y precio
             document.getElementById('modal-title').innerText = selectedGroup.nombre;
             document.getElementById('modal-type').innerText = selectedGroup.tipo;
             document.getElementById('modal-img').src = selectedVariant.imgs[0];
             document.getElementById('modal-price').innerText = formatMoney(selectedVariant.precio);
 
-            // 2. Renderizar Galería de la variante seleccionada
+            // Galería
             const gallery = document.getElementById('modal-gallery');
             if(selectedVariant.imgs.length > 1) {
                 gallery.classList.remove('hidden');
@@ -359,7 +379,7 @@
                     </div>`).join('');
             } else gallery.classList.add('hidden');
 
-            // 3. Renderizar botones VARIABLE (Opción Principal)
+            // Set elimina automáticamente duplicados
             const uniqueVars = [...new Set(selectedGroup.variaciones.map(v => v.variable).filter(v => v !== ''))];
             const vSection = document.getElementById('variant-section');
             if (uniqueVars.length > 0) {
@@ -368,8 +388,12 @@
                     <button onclick="selectVariable('${v}')" class="variant-btn ${v === currentVariable ? 'active' : ''}">${v}</button>`).join('');
             } else vSection.classList.add('hidden');
 
-            // 4. Renderizar botones EXTRA (Opciones dependientes de Variable)
-            const availableExtras = [...new Set(selectedGroup.variaciones.filter(v => v.variable === currentVariable).map(v => v.extra).filter(e => e !== ''))];
+            // Construir botones Extra SÓLO con lo que aplica a la Variable actual
+            const availableExtras = [...new Set(selectedGroup.variaciones
+                .filter(v => v.variable === currentVariable)
+                .map(v => v.extra)
+                .filter(e => e !== ''))];
+                
             const eSection = document.getElementById('extra-section');
             if (availableExtras.length > 0) {
                 eSection.classList.remove('hidden');
@@ -392,9 +416,8 @@
             window.history.pushState({}, '', window.location.pathname);
         }
 
-        // FUNCIONES DE CARRITO Y COMPARTIR CON PREVENCIÓN DE APERTURA DE MODAL
         function quickAdd(event, groupId) {
-            event.stopPropagation(); // Evita que se abra el modal
+            event.stopPropagation();
             const g = allGroups.find(p => p.id === groupId);
             const v = g.variaciones[0];
             if(!cart.find(c => c.sku === v.sku)) cart.push({ ...v, nombre: g.nombre });
@@ -435,7 +458,7 @@
             let total = 0;
             container.innerHTML = cart.map((item, i) => {
                 total += item.precio;
-                // Construir etiqueta de variantes seleccionadas
+                
                 let varLabels = [];
                 if(item.variable) varLabels.push(item.variable);
                 if(item.extra) varLabels.push(item.extra);
@@ -478,7 +501,7 @@
             });
             
             const total = cart.reduce((acc, i) => acc + i.precio, 0);
-            msg += `%0A*TOTAL ESTIMADO (S/IVA): ${formatMoney(total)}*%0A%0A_Precios antes de IVA._`;
+            msg += `%0A*TOTAL ESTIMADO (S/IVA): ${formatMoney(total)}*%0A%0A_Favor confirmar disponibilidad._`;
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
         }
 
