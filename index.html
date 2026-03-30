@@ -6,7 +6,6 @@
     <title id="page-title">Catálogo - Forwarder Venture</title>
     
     <link rel="icon" type="image/png" id="dynamic-favicon" href="logo.png">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -22,7 +21,11 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .banner-hero { background-color: #002e5f; background-blend-mode: multiply; background-size: cover; background-position: center; }
+        .banner-hero {
+            background-color: #002e5f; 
+            background-blend-mode: multiply;
+            background-size: cover; background-position: center;
+        }
 
         .variant-btn { border: 2px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; transition: all 0.2s; cursor: pointer; text-transform: uppercase; color: #4b5563; }
         .variant-btn.active { border-color: #002e5f; background-color: #002e5f; color: white; }
@@ -247,7 +250,7 @@
         const SHEET_ID = '17a0Pxq1EOLRf86yiuM014ZluVqL2Qj1Mt8cKRDenjHc';
         const MASTER_GID = '846871297'; 
         
-        // TU WEBHOOK OFICIAL
+        // WEBHOOK OFICIAL
         const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxNsrRS86CdWdlB5fJJCw4abEdjh2FAT5OR6qh4FDWG0yd14zS9xojTDSfJWcizwn-a/exec'; 
         
         let catalogConfig = null;
@@ -295,17 +298,15 @@
             window.history.pushState({ modalOpen: true }, '', url);
         }
 
-        // LÓGICA DE NAVEGADOR PARA BOTÓN "ATRÁS"
+        // CONTROL BOTÓN ATRÁS DEL NAVEGADOR
         window.addEventListener('popstate', function(e) {
             const cartEl = document.getElementById('cart-modal');
             const productEl = document.getElementById('product-modal');
             
-            // Si el carrito está abierto, lo cierra
             if (!cartEl.classList.contains('hidden')) {
                 cartEl.classList.add('hidden');
             }
             
-            // Si el modal de producto está abierto y la URL no tiene ?p=, lo cierra
             const pQuery = getUrlParameter('p');
             if (!pQuery && !productEl.classList.contains('hidden')) {
                 productEl.classList.replace('opacity-100', 'opacity-0');
@@ -358,11 +359,15 @@
                     const tempGroups = {};
                     
                     results.data.forEach((row, index) => {
-                        const sku = row['SKU']?.toString().trim();
-                        let pSku = row['PARENT SKU']?.toString().trim() || sku || `FILA-${index}`;
+                        let sku = row['SKU']?.toString().trim();
+                        let pSku = row['PARENT SKU']?.toString().trim();
                         
-                        if (!row['NOMBRE'] && !sku) return;
+                        if (!row['NOMBRE'] && !sku && !pSku) return;
                         if ((row['VISIBLE'] || '').toString().trim().toUpperCase() === 'NO') return;
+
+                        // ARREGLO DE SKUS FANTASMAS
+                        if(!pSku) pSku = sku || `FILA-${index}`;
+                        if(!sku) sku = `VAR-${index}`; // Evita sobreescribir variantes sin SKU
 
                         let pStr = (row['PRECIO DE VENTA'] || row['PRECIO 1'] || '0').toString();
                         pStr = pStr.replace(/[,.]\d{2}$/, ''); 
@@ -390,8 +395,16 @@
 
                         if (!tempGroups[pSku].skuMap[sku]) {
                             tempGroups[pSku].skuMap[sku] = { sku: sku, variable: superClean(mainVarStr), extra: superClean(extraStr), imgs: imgs, precio: precioVenta };
-                        } else if (precioVenta > tempGroups[pSku].skuMap[sku].precio) {
-                            tempGroups[pSku].skuMap[sku].precio = precioVenta;
+                        } else {
+                            // COMBINAR IMÁGENES SI SE REPITE EL SKU (Mismo proveedor o múltiples links)
+                            let currentImgs = tempGroups[pSku].skuMap[sku].imgs;
+                            let combinedImgs = [...new Set([...currentImgs, ...rawImgs])];
+                            if(rawImgs.length > 0) combinedImgs = combinedImgs.filter(i => !i.includes('Sin+Imagen'));
+                            tempGroups[pSku].skuMap[sku].imgs = combinedImgs;
+
+                            if (precioVenta > tempGroups[pSku].skuMap[sku].precio) {
+                                tempGroups[pSku].skuMap[sku].precio = precioVenta;
+                            }
                         }
                     });
 
@@ -449,7 +462,7 @@
                 grid.insertAdjacentHTML('beforeend', slice.map(p => {
                     const displayImg = p.mainImg || p.variaciones[0].imgs[0]; 
                     return `
-                    <div class="bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 flex flex-col cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1 group" onclick="openModal('${p.id}')">
+                    <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1 group" onclick="openModal('${p.id}')">
                         <div class="aspect-square relative bg-white overflow-hidden p-3">
                             <img src="${displayImg}" loading="lazy" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/400?text=FV'">
                             <div class="absolute top-2 left-2 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[8px] font-black uppercase text-fv-blue border border-gray-100 shadow-sm">${p.tipo}</div>
@@ -459,7 +472,7 @@
                             <div class="mt-auto flex justify-between items-center pt-2">
                                 <p class="text-sm md:text-base font-black text-fv-blue">${formatMoney(p.variaciones[0].precio)}</p>
                                 <div class="flex gap-1">
-                                    <button onclick="quickShare(event, '${p.id}')" class="w-8 h-8 bg-[#F0FDF4] text-[#16A34A] rounded-lg flex items-center justify-center hover:bg-green-100 transition shadow-sm border border-green-100" title="Consultar"><i class="fa-brands fa-whatsapp text-sm"></i></button>
+                                    <button onclick="quickShare(event, '${p.id}')" class="w-8 h-8 bg-[#F0FDF4] text-[#16A34A] rounded-lg flex items-center justify-center hover:bg-green-100 transition shadow-sm border border-green-100" title="Consultar por WhatsApp"><i class="fa-brands fa-whatsapp text-sm"></i></button>
                                     <button onclick="quickAdd(event, '${p.id}')" class="w-8 h-8 bg-gray-50 text-fv-blue rounded-lg flex items-center justify-center hover:bg-fv-blue hover:text-white transition shadow-sm border border-gray-200"><i class="fa-solid fa-plus text-xs"></i></button>
                                 </div>
                             </div>
@@ -500,6 +513,18 @@
             if (selectedGroup.descripcion) { descEl.innerText = selectedGroup.descripcion; descEl.classList.remove('hidden'); } 
             else { descEl.classList.add('hidden'); }
 
+            // GALERÍA DE IMÁGENES RESTAURADA
+            const gallery = document.getElementById('modal-gallery');
+            if(selectedVariant.imgs.length > 1) {
+                gallery.classList.remove('hidden');
+                gallery.innerHTML = selectedVariant.imgs.map((img, i) => `
+                    <div class="w-16 h-16 flex-shrink-0 border-2 ${i === 0 ? 'border-fv-orange' : 'border-transparent'} rounded-lg overflow-hidden cursor-pointer bg-white" onclick="changeModalImg('${img}', this)">
+                        <img src="${img}" class="w-full h-full object-contain p-1">
+                    </div>`).join('');
+            } else {
+                gallery.classList.add('hidden');
+            }
+
             const uniqueVars = [...new Set(selectedGroup.variaciones.map(v => v.variable).filter(v => v !== ''))];
             const vS = document.getElementById('variant-section');
             vS.classList.toggle('hidden', uniqueVars.length === 0);
@@ -509,6 +534,13 @@
             const eS = document.getElementById('extra-section');
             eS.classList.toggle('hidden', availableExtras.length === 0);
             if (availableExtras.length > 0) document.getElementById('extra-container').innerHTML = availableExtras.map(e => `<button onclick="selectExtra('${e}')" class="variant-btn ${e === currentExtra ? 'active' : ''}">${e}</button>`).join('');
+        }
+
+        // FUNCIÓN PARA CAMBIAR IMAGEN EN LA GALERÍA
+        function changeModalImg(url, el) {
+            document.getElementById('modal-img').src = url;
+            document.querySelectorAll('#modal-gallery > div').forEach(d => d.classList.replace('border-fv-orange', 'border-transparent'));
+            el.classList.replace('border-transparent', 'border-fv-orange');
         }
 
         function selectVariable(v) { currentVariable = v; updateVariantSelectionUI(); }
@@ -557,7 +589,7 @@
                 document.getElementById('cart-footer-area').classList.remove('hidden');
                 document.getElementById('cart-footer-buttons').classList.remove('hidden');
                 document.getElementById('checkout-footer-buttons').classList.add('hidden');
-                window.history.pushState({ modalOpen: true }, ''); // Para el botón atrás
+                window.history.pushState({ modalOpen: true }, ''); 
             } else {
                 cartEl.classList.add('hidden');
             }
@@ -610,16 +642,19 @@
         function shareSingleProduct() {
             const catName = catalogConfig ? catalogConfig['Nombre Catálogo'] : 'Catálogo';
             const link = window.location.href; 
-            const text = `Hola, vengo del catálogo de *${catName.toUpperCase()}*.%0AQuiero consultar sobre este producto:%0A*${selectedGroup.nombre}*%0A${link}`;
+            // SKU INCLUIDO EN WHATSAPP DESDE EL MODAL
+            const text = `Hola, vengo del catálogo de *${catName.toUpperCase()}*.%0AQuiero consultar sobre este producto:%0A*${selectedGroup.nombre}* [SKU: ${selectedVariant.sku}]%0A${link}`;
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
         }
 
         function quickShare(event, id) {
             event.stopPropagation();
             const g = allGroups.find(p => p.id === id);
+            const v = g.variaciones[0]; // Tomamos la primera variante para el SKU
             const catName = catalogConfig ? catalogConfig['Nombre Catálogo'] : 'Catálogo';
             const link = `${window.location.origin}${window.location.pathname}?cat=${encodeURIComponent(catName)}&p=${id}`;
-            const text = `Hola, vengo del catálogo de *${catName.toUpperCase()}*.%0AQuiero consultar sobre este producto:%0A*${g.nombre}*%0A${link}`;
+            // SKU INCLUIDO EN WHATSAPP RÁPIDO
+            const text = `Hola, vengo del catálogo de *${catName.toUpperCase()}*.%0AQuiero consultar sobre este producto:%0A*${g.nombre}* [SKU: ${v.sku}]%0A${link}`;
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
         }
         
