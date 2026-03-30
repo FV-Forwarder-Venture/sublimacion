@@ -22,7 +22,7 @@
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         .banner-hero {
-            background-color: #002e5f; /* Fallback */
+            background-color: #002e5f; 
             background-blend-mode: multiply;
             background-size: cover; background-position: center;
         }
@@ -36,7 +36,6 @@
         .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #002e5f; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Floating Buttons */
         .fab-cart { position: fixed; bottom: 30px; right: 30px; z-index: 90; box-shadow: 0 10px 25px rgba(0,46,95,0.3); transition: transform 0.3s; }
         .fab-cart:hover { transform: scale(1.05); }
         .fab-wa { position: fixed; bottom: 30px; left: 30px; z-index: 90; box-shadow: 0 10px 25px rgba(37,211,102,0.4); transition: transform 0.3s; }
@@ -171,10 +170,10 @@
         <div class="bg-white w-full max-w-md h-full flex flex-col shadow-2xl animate-slide-up md:animate-none">
             <div class="p-6 border-b flex justify-between items-center bg-white shrink-0">
                 <div>
-                    <h2 class="text-2xl font-black text-fv-blue uppercase tracking-tighter leading-none">Mi Pedido</h2>
-                    <span class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Revisa tus productos</span>
+                    <h2 class="text-2xl font-black text-fv-blue uppercase tracking-tighter leading-none">Checkout</h2>
+                    <span class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Revisa tu pedido</span>
                 </div>
-                <button onclick="toggleCart()" class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 transition"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="toggleCart()" class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
             <div id="cart-items-view" class="flex-grow overflow-y-auto bg-gray-50/50 flex flex-col">
@@ -214,7 +213,7 @@
                         <span>No incl.</span>
                     </div>
                     <div class="flex justify-between items-end pt-4 border-t border-gray-100">
-                        <span class="font-black text-fv-blue uppercase text-sm">Total</span>
+                        <span class="font-black text-fv-blue uppercase text-sm">Total Estimado</span>
                         <span id="cart-total" class="text-3xl font-black text-fv-blue">$0</span>
                     </div>
                 </div>
@@ -244,7 +243,7 @@
     <script>
         const WHATSAPP_NUMBER = '3114957971'; 
         const SHEET_ID = '17a0Pxq1EOLRf86yiuM014ZluVqL2Qj1Mt8cKRDenjHc';
-        const MASTER_GID = '846871297'; // Hoja que controla todos los catálogos
+        const MASTER_GID = '846871297'; 
         
         let catalogConfig = null;
         let allGroups = [];
@@ -275,20 +274,40 @@
             return text.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
         }
 
-        // 1. INICIALIZACIÓN: Leer Hoja Maestra
+        // 1. INICIALIZACIÓN: Leer Hoja Maestra y auto-detectar enlace
         function initApp() {
+            const currentUrl = window.location.href.toLowerCase();
             const urlParams = new URLSearchParams(window.location.search);
-            const catQuery = urlParams.get('cat') || 'Tecnología'; 
+            const catQuery = urlParams.get('cat')?.toLowerCase(); 
             
             const masterUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${MASTER_GID}`;
             
             Papa.parse(masterUrl, {
                 download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
-                    catalogConfig = results.data.find(r => removeAccentsAndLower(r['Nombre Catálogo']) === removeAccentsAndLower(catQuery));
                     
-                    if (!catalogConfig) {
-                        alert("Catálogo no encontrado. Revisa la URL (Ej: ?cat=Tecnología).");
+                    // 1. Intentar hacer match analizando la URL en la que está publicada la página
+                    for (let row of results.data) {
+                        const enlace = row['Enlace']?.trim().toLowerCase();
+                        // Compara limpiando la URL de www, http y el / final para evitar errores
+                        if (enlace && currentUrl.includes(enlace.replace(/https?:\/\/(www\.)?/,'').replace(/\/$/, ''))) {
+                            catalogConfig = row;
+                            break;
+                        }
+                    }
+                    
+                    // 2. Si no coincide la URL (ej. pruebas locales), busca por parámetro ?cat=
+                    if (!catalogConfig && catQuery) {
+                        catalogConfig = results.data.find(r => removeAccentsAndLower(r['Nombre Catálogo']) === catQuery);
+                    }
+                    
+                    // 3. Fallback: Si no hay nada, carga la primera fila de tu hoja
+                    if (!catalogConfig && results.data.length > 0) {
+                        catalogConfig = results.data[0];
+                    }
+
+                    if(!catalogConfig) {
+                        alert("No se pudo configurar el catálogo.");
                         return;
                     }
 
@@ -297,7 +316,6 @@
                     document.getElementById('banner-title').innerText = catalogConfig['Titulo'];
                     document.getElementById('banner-desc').innerText = catalogConfig['Descripción'];
                     
-                    // Si agregas una columna "Logo" en tu hoja maestra, la usará. Si no, usa logo.png local
                     const logoUrl = catalogConfig['Logo'] || catalogConfig['Imagen Logo'] || 'logo.png';
                     document.getElementById('main-logo').src = logoUrl;
                     
@@ -306,10 +324,15 @@
                         document.getElementById('banner-section').style.backgroundImage = `linear-gradient(90deg, rgba(0,46,95,0.95) 0%, rgba(0,46,95,0.6) 100%), url('${bannerUrl}')`;
                     }
 
-                    // Extraer GID del Enlace
-                    const link = catalogConfig['Enlace'];
-                    const gidMatch = link.match(/gid=([0-9]+)/);
-                    const catalogGid = gidMatch ? gidMatch[1] : '0';
+                    // Extraer GID de la columna específica GID Hoja
+                    let catalogGid = catalogConfig['GID Hoja']?.toString().trim();
+                    
+                    if(!catalogGid) {
+                        // Por compatibilidad si lo dejaron dentro de "Enlace"
+                        const link = catalogConfig['Enlace'] || '';
+                        const gidMatch = link.match(/gid=([0-9]+)/);
+                        catalogGid = gidMatch ? gidMatch[1] : '0';
+                    }
                     
                     loadProductsData(catalogGid);
                 }
@@ -446,10 +469,7 @@
                             <h3 class="font-bold text-[11px] md:text-xs text-fv-blue leading-tight mb-2 h-8 line-clamp-2 uppercase">${p.nombre}</h3>
                             <div class="mt-auto flex justify-between items-center pt-2">
                                 <p class="text-sm md:text-base font-black text-fv-blue">${formatMoney(main.precio)}</p>
-                                <div class="flex gap-1">
-                                    <button onclick="quickShare(event, '${p.id}')" class="w-8 h-8 bg-green-50 text-green-600 rounded-lg flex items-center justify-center hover:bg-green-100 transition shadow-sm" title="Consultar por WhatsApp"><i class="fa-brands fa-whatsapp text-sm"></i></button>
-                                    <button onclick="quickAdd(event, '${p.id}')" class="w-8 h-8 bg-gray-50 text-fv-blue rounded-lg flex items-center justify-center hover:bg-fv-blue hover:text-white transition shadow-sm border border-gray-200 hover:border-fv-blue"><i class="fa-solid fa-plus text-xs"></i></button>
-                                </div>
+                                <button onclick="quickAdd(event, '${p.id}')" class="w-8 h-8 bg-gray-50 text-fv-blue rounded-lg flex items-center justify-center hover:bg-fv-blue hover:text-white transition shadow-sm border border-gray-200 hover:border-fv-blue"><i class="fa-solid fa-plus text-xs"></i></button>
                             </div>
                         </div>
                     </div>`;
@@ -573,10 +593,9 @@
         }
         function removeFromCart(i) { cart.splice(i, 1); updateCartUI(); }
         
-        // INTERACCIÓN DEL CARRITO (VISTAS)
         function toggleCart() { 
             document.getElementById('cart-modal').classList.toggle('hidden'); 
-            hideCheckoutForm(); // Siempre abrir en vista de carrito
+            hideCheckoutForm(); 
         }
         
         function showCheckoutForm() {
@@ -616,7 +635,7 @@
                 msg += `• ${item.qty}x *${item.nombre}*${labelStr} - ${formatMoney(item.precio * item.qty)}%0A`;
             });
             
-            msg += `%0A*TOTAL A PAGAR: ${document.getElementById('cart-total').innerText}*%0A_Sujeto a disponibilidad._`;
+            msg += `%0A*TOTAL A PAGAR: ${document.getElementById('cart-total').innerText}*%0A_Por favor, confírmame la disponibilidad._`;
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
         }
 
@@ -647,14 +666,6 @@
             msg += `%0A*TOTAL A PAGAR: ${document.getElementById('cart-total').innerText}*%0A%0A_Quedo atento para acordar el método de pago y despacho._`;
             
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
-        }
-
-        function quickShare(event, id) {
-            event.stopPropagation();
-            const g = allGroups.find(p => p.id === id);
-            const catName = catalogConfig ? catalogConfig['Nombre Catálogo'] : 'Catálogo';
-            const text = `Hola, vengo del catálogo de *${catName.toUpperCase()}*.%0AQuiero consultar sobre este producto:%0A%0A*${g.nombre}*%0A_¿Me regalas más información?_`;
-            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
         }
 
         function shareSingleProduct() {
