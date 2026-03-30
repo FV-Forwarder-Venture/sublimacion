@@ -315,7 +315,6 @@
             
             Papa.parse(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${MASTER_GID}`, {
                 download: true, header: true, skipEmptyLines: true,
-                // BLINDAJE 1: Transforma los títulos del Excel a mayúsculas y les quita los espacios fantasma
                 transformHeader: function(h) { return h.trim().toUpperCase(); },
                 complete: function(results) {
                     for (let row of results.data) {
@@ -350,7 +349,6 @@
         function loadProductsData(gid) {
             Papa.parse(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`, {
                 download: true, header: true, skipEmptyLines: true,
-                // BLINDAJE 1: Limpia espacios en las columnas
                 transformHeader: function(h) { return h.trim().toUpperCase(); },
                 complete: function(results) {
                     const tempGroups = {};
@@ -360,7 +358,7 @@
                         let pSku = row['PARENT SKU']?.toString().trim();
                         
                         if (!row['NOMBRE'] && !sku && !pSku) return;
-                        if ((row['VISIBLE'] || '').toString().trim() === 'NO') return;
+                        if ((row['VISIBLE'] || '').toString().trim().toUpperCase() === 'NO') return;
 
                         if(!pSku) pSku = sku || `FILA-${index}`;
                         if(!sku) sku = `VAR-${index}`; 
@@ -369,8 +367,11 @@
                         pStr = pStr.replace(/[,.]\d{2}$/, ''); 
                         const precioVenta = parseInt(pStr.replace(/\D/g, '')) || 0;
                         
-                        const mainVarStr = row['VARIABLE'] || row['CAPACIDAD/RAM'] || row['CAPACIDAD'] || '';
-                        const extraStr = row['EXTRA'] || row['COLOR'] || row['CARACTERISTICAS'] || '';
+                        // Lectura de variables ampliada para no dejar nada por fuera
+                        let mainVarStr = row['VARIABLE'] || row['VARIABLES'] || row['CAPACIDAD/RAM'] || row['CAPACIDAD'] || row['RAM'] || '';
+                        if(row['RAM'] && !mainVarStr.includes(row['RAM'])) mainVarStr += ` ${row['RAM']}`;
+                        
+                        const extraStr = row['EXTRA'] || row['EXTRAS'] || row['COLOR'] || row['CARACTERISTICAS'] || '';
                         const descStr = row['DESCRIPCIÓN'] || row['DESCRIPCION'] || '';
                         const mainImgOverride = row['IMAGEN PRINCIPAL'] || '';
 
@@ -380,12 +381,12 @@
                         const safeVariable = superClean(mainVarStr);
                         const safeExtra = superClean(extraStr);
 
-                        // BLINDAJE 2: SISTEMA ANTI-CLONES (Evita que SKUs duplicados maten las variables)
+                        // PROTECCIÓN ANTI-SOBREESCRITURA (Si el Excel tiene SKUs repetidos pero diferentes variables)
                         let variantKey = sku;
                         if (tempGroups[pSku] && tempGroups[pSku].skuMap[variantKey]) {
                             let existing = tempGroups[pSku].skuMap[variantKey];
                             if (existing.variable !== safeVariable || existing.extra !== safeExtra) {
-                                variantKey = sku + '-DUPLICADO-' + index; 
+                                variantKey = sku + '-VAR-' + index; 
                             }
                         }
 
@@ -401,16 +402,13 @@
                             };
                         }
 
+                        // LÓGICA DE IMÁGENES RESTAURADA: Solo toma las imágenes de la fila con el precio más alto
                         if (!tempGroups[pSku].skuMap[variantKey]) {
                             tempGroups[pSku].skuMap[variantKey] = { sku: sku, variable: safeVariable, extra: safeExtra, imgs: imgs, precio: precioVenta };
                         } else {
-                            let currentImgs = tempGroups[pSku].skuMap[variantKey].imgs;
-                            let combinedImgs = [...new Set([...currentImgs, ...rawImgs])];
-                            if(rawImgs.length > 0) combinedImgs = combinedImgs.filter(i => !i.includes('Sin+Imagen'));
-                            tempGroups[pSku].skuMap[variantKey].imgs = combinedImgs;
-
                             if (precioVenta > tempGroups[pSku].skuMap[variantKey].precio) {
                                 tempGroups[pSku].skuMap[variantKey].precio = precioVenta;
+                                tempGroups[pSku].skuMap[variantKey].imgs = imgs; 
                             }
                         }
                     });
@@ -506,7 +504,10 @@
             updateVariantSelectionUI();
             const modal = document.getElementById('product-modal');
             modal.classList.remove('hidden');
-            setTimeout(() => { modal.classList.replace('opacity-0', 'opacity-100'); document.getElementById('product-modal-content').classList.replace('scale-95', 'scale-100'); }, 10);
+            setTimeout(() => {
+                modal.classList.replace('opacity-0', 'opacity-100');
+                document.getElementById('product-modal-content').classList.replace('scale-95', 'scale-100');
+            }, 10);
         }
 
         function updateVariantSelectionUI() {
