@@ -245,6 +245,8 @@
         const WHATSAPP_NUMBER = '3114957971'; 
         const SHEET_ID = '17a0Pxq1EOLRf86yiuM014ZluVqL2Qj1Mt8cKRDenjHc';
         const MASTER_GID = '846871297'; 
+        
+        // TU WEBHOOK OFICIAL
         const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxNsrRS86CdWdlB5fJJCw4abEdjh2FAT5OR6qh4FDWG0yd14zS9xojTDSfJWcizwn-a/exec'; 
         
         let catalogConfig = null;
@@ -289,22 +291,20 @@
             const url = new URL(window.location);
             if (value) url.searchParams.set(key, value);
             else url.searchParams.delete(key);
-            window.history.pushState({ modalOpen: true }, '', url);
+            window.history.replaceState({}, '', url); // replaceState no recarga la pag
         }
 
+        // SISTEMA DE BOTÓN "ATRÁS" DEL CELULAR (Evita salir de la web)
         window.addEventListener('popstate', function(e) {
             const cartEl = document.getElementById('cart-modal');
             const productEl = document.getElementById('product-modal');
             
             if (!cartEl.classList.contains('hidden')) {
-                cartEl.classList.add('hidden');
-            }
-            
-            const pQuery = getUrlParameter('p');
-            if (!pQuery && !productEl.classList.contains('hidden')) {
+                cartEl.classList.add('hidden'); // Cierra carrito
+            } else if (!productEl.classList.contains('hidden')) {
                 productEl.classList.replace('opacity-100', 'opacity-0');
                 document.getElementById('product-modal-content').classList.replace('scale-100', 'scale-95');
-                setTimeout(() => productEl.classList.add('hidden'), 200);
+                setTimeout(() => productEl.classList.add('hidden'), 200); // Cierra modal producto
             }
         });
 
@@ -334,7 +334,7 @@
                     
                     const logoUrl = catalogConfig['LOGO'] || catalogConfig['IMAGEN LOGO'] || 'logo.png';
                     document.getElementById('main-logo').src = logoUrl;
-                    document.getElementById('dynamic-favicon').href = logoUrl;
+                    document.getElementById('dynamic-favicon').href = logoUrl; // FAVICON ACTUALIZADO
                     
                     if(catalogConfig['IMAGEN BANNER']) {
                         document.getElementById('banner-section').style.backgroundImage = `linear-gradient(90deg, rgba(0,46,95,0.95) 0%, rgba(0,46,95,0.6) 100%), url('${catalogConfig['IMAGEN BANNER']}')`;
@@ -367,28 +367,19 @@
                         pStr = pStr.replace(/[,.]\d{2}$/, ''); 
                         const precioVenta = parseInt(pStr.replace(/\D/g, '')) || 0;
                         
-                        // Lectura de variables ampliada para no dejar nada por fuera
                         let mainVarStr = row['VARIABLE'] || row['VARIABLES'] || row['CAPACIDAD/RAM'] || row['CAPACIDAD'] || row['RAM'] || '';
                         if(row['RAM'] && !mainVarStr.includes(row['RAM'])) mainVarStr += ` ${row['RAM']}`;
                         
-                        const extraStr = row['EXTRA'] || row['EXTRAS'] || row['COLOR'] || row['CARACTERISTICAS'] || '';
+                        const extraStr = row['EXTRA'] || row['EXTRAS'] || row['COLOR'] || row['CARACTERISTICAS'] || row['OPCION'] || '';
                         const descStr = row['DESCRIPCIÓN'] || row['DESCRIPCION'] || '';
                         const mainImgOverride = row['IMAGEN PRINCIPAL'] || '';
 
-                        const rawImgs = (row['IMAGEN'] || '').split('|').map(i => i.trim()).filter(i => i.startsWith('http') && !i.includes('cloudinary'));
+                        // SOLUCIÓN FOTOS: Soporta comas, saltos de línea y tubitos. Ya no bloquea Cloudinary
+                        const rawImgs = (row['IMAGEN'] || '').split(/\||,|\n/).map(i => i.trim()).filter(i => i.startsWith('http'));
                         const imgs = rawImgs.length > 0 ? rawImgs : ['https://via.placeholder.com/400?text=Sin+Imagen'];
 
-                        const safeVariable = superClean(mainVarStr);
-                        const safeExtra = superClean(extraStr);
-
-                        // PROTECCIÓN ANTI-SOBREESCRITURA (Si el Excel tiene SKUs repetidos pero diferentes variables)
-                        let variantKey = sku;
-                        if (tempGroups[pSku] && tempGroups[pSku].skuMap[variantKey]) {
-                            let existing = tempGroups[pSku].skuMap[variantKey];
-                            if (existing.variable !== safeVariable || existing.extra !== safeExtra) {
-                                variantKey = sku + '-VAR-' + index; 
-                            }
-                        }
+                        let safeVariable = superClean(mainVarStr);
+                        let safeExtra = superClean(extraStr);
 
                         if (!tempGroups[pSku]) {
                             tempGroups[pSku] = {
@@ -402,13 +393,32 @@
                             };
                         }
 
-                        // LÓGICA DE IMÁGENES RESTAURADA: Solo toma las imágenes de la fila con el precio más alto
+                        // SISTEMA DE RESCATE: Si olvidas la variable, usa el SKU para forzar a que salga el botón
+                        if (!safeVariable && !safeExtra && Object.keys(tempGroups[pSku].skuMap).length > 0) {
+                            safeExtra = sku.replace(pSku, '').replace(/^-/, '') || `Opción ${index}`;
+                            
+                            // Y arregla también el primero si estaba vacío
+                            let firstKey = Object.keys(tempGroups[pSku].skuMap)[0];
+                            let firstItem = tempGroups[pSku].skuMap[firstKey];
+                            if(!firstItem.variable && !firstItem.extra) {
+                                firstItem.extra = firstItem.sku.replace(pSku, '').replace(/^-/, '') || 'Opción 1';
+                            }
+                        }
+
+                        let variantKey = sku;
+                        if (tempGroups[pSku].skuMap[variantKey]) {
+                            let existing = tempGroups[pSku].skuMap[variantKey];
+                            if (existing.variable !== safeVariable || existing.extra !== safeExtra) {
+                                variantKey = sku + '-VAR-' + index; 
+                            }
+                        }
+
                         if (!tempGroups[pSku].skuMap[variantKey]) {
                             tempGroups[pSku].skuMap[variantKey] = { sku: sku, variable: safeVariable, extra: safeExtra, imgs: imgs, precio: precioVenta };
                         } else {
                             if (precioVenta > tempGroups[pSku].skuMap[variantKey].precio) {
                                 tempGroups[pSku].skuMap[variantKey].precio = precioVenta;
-                                tempGroups[pSku].skuMap[variantKey].imgs = imgs; 
+                                tempGroups[pSku].skuMap[variantKey].imgs = imgs; // Solo guarda las del más caro, sin combinar.
                             }
                         }
                     });
@@ -476,7 +486,7 @@
                             <h3 class="font-bold text-[11px] md:text-xs text-fv-blue leading-tight mb-2 h-8 line-clamp-2 uppercase">${p.nombre}</h3>
                             <div class="mt-auto flex justify-between items-center pt-2">
                                 <p class="text-sm md:text-base font-black text-fv-blue">${formatMoney(p.variaciones[0].precio)}</p>
-                                <div class="flex gap-1">
+                                <div class="flex gap-1 z-10" onclick="event.stopPropagation();">
                                     <button onclick="quickShare(event, '${p.id}')" class="w-8 h-8 bg-[#F0FDF4] text-[#16A34A] rounded-lg flex items-center justify-center hover:bg-green-100 transition shadow-sm border border-green-100" title="Consultar por WhatsApp"><i class="fa-brands fa-whatsapp text-sm"></i></button>
                                     <button onclick="quickAdd(event, '${p.id}')" class="w-8 h-8 bg-gray-50 text-fv-blue rounded-lg flex items-center justify-center hover:bg-fv-blue hover:text-white transition shadow-sm border border-gray-200"><i class="fa-solid fa-plus text-xs"></i></button>
                                 </div>
@@ -500,14 +510,12 @@
             currentExtra = selectedGroup.variaciones[0].extra;
             
             setUrlParameter('p', groupId); 
+            window.history.pushState({ modalOpen: true }, ''); // Para el botón atrás
             
             updateVariantSelectionUI();
             const modal = document.getElementById('product-modal');
             modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.replace('opacity-0', 'opacity-100');
-                document.getElementById('product-modal-content').classList.replace('scale-95', 'scale-100');
-            }, 10);
+            setTimeout(() => { modal.classList.replace('opacity-0', 'opacity-100'); document.getElementById('product-modal-content').classList.replace('scale-95', 'scale-100'); }, 10);
         }
 
         function updateVariantSelectionUI() {
@@ -588,6 +596,7 @@
         function toggleCart() { 
             const cartEl = document.getElementById('cart-modal');
             if (cartEl.classList.contains('hidden')) {
+                window.history.pushState({ modalOpen: true }, ''); // Para el botón atrás
                 cartEl.classList.remove('hidden');
                 document.getElementById('cart-items-view').classList.remove('hidden');
                 document.getElementById('checkout-form-view').classList.add('hidden');
@@ -595,7 +604,6 @@
                 document.getElementById('cart-footer-area').classList.remove('hidden');
                 document.getElementById('cart-footer-buttons').classList.remove('hidden');
                 document.getElementById('checkout-footer-buttons').classList.add('hidden');
-                window.history.pushState({ modalOpen: true }, ''); 
             } else {
                 cartEl.classList.add('hidden');
             }
