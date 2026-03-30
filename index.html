@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title">Catálogo - Forwarder Venture</title>
     
-    <link rel="icon" type="image/jpg" href="logo.jpg">
+    <link rel="icon" type="image/png" id="dynamic-favicon" href="logo.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -21,11 +22,7 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .banner-hero {
-            background-color: #002e5f; 
-            background-blend-mode: multiply;
-            background-size: cover; background-position: center;
-        }
+        .banner-hero { background-color: #002e5f; background-blend-mode: multiply; background-size: cover; background-position: center; }
 
         .variant-btn { border: 2px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; transition: all 0.2s; cursor: pointer; text-transform: uppercase; color: #4b5563; }
         .variant-btn.active { border-color: #002e5f; background-color: #002e5f; color: white; }
@@ -227,6 +224,9 @@
                     <button onclick="showCheckoutForm()" class="w-full bg-fv-blue text-white py-4 rounded-xl font-black text-sm flex items-center justify-center gap-3 hover:bg-[#001f40] transition shadow-lg uppercase tracking-wide">
                         Completar Pedido <i class="fa-solid fa-arrow-right"></i>
                     </button>
+                    <button onclick="sendOrderWhatsApp()" class="w-full bg-[#25D366] text-white py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#128C7E] transition uppercase shadow-md shadow-green-500/20">
+                        <i class="fa-brands fa-whatsapp text-lg"></i> Pedido Rápido por Chat
+                    </button>
                 </div>
 
                 <div id="checkout-footer-buttons" class="hidden grid grid-cols-1 gap-3">
@@ -247,8 +247,8 @@
         const SHEET_ID = '17a0Pxq1EOLRf86yiuM014ZluVqL2Qj1Mt8cKRDenjHc';
         const MASTER_GID = '846871297'; 
         
-        // AQUÍ VA LA URL DE TU WEBHOOK (Google Apps Script)
-        const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwb00bKe9mVa_-Xa-fA32Qp1Vk__MnUeb7MCvTun6nKScrNQNrgyKZmGzoLChbFmtIg/exec'; 
+        // TU WEBHOOK OFICIAL
+        const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxNsrRS86CdWdlB5fJJCw4abEdjh2FAT5OR6qh4FDWG0yd14zS9xojTDSfJWcizwn-a/exec'; 
         
         let catalogConfig = null;
         let allGroups = [];
@@ -292,8 +292,27 @@
             const url = new URL(window.location);
             if (value) url.searchParams.set(key, value);
             else url.searchParams.delete(key);
-            window.history.pushState({}, '', url);
+            window.history.pushState({ modalOpen: true }, '', url);
         }
+
+        // LÓGICA DE NAVEGADOR PARA BOTÓN "ATRÁS"
+        window.addEventListener('popstate', function(e) {
+            const cartEl = document.getElementById('cart-modal');
+            const productEl = document.getElementById('product-modal');
+            
+            // Si el carrito está abierto, lo cierra
+            if (!cartEl.classList.contains('hidden')) {
+                cartEl.classList.add('hidden');
+            }
+            
+            // Si el modal de producto está abierto y la URL no tiene ?p=, lo cierra
+            const pQuery = getUrlParameter('p');
+            if (!pQuery && !productEl.classList.contains('hidden')) {
+                productEl.classList.replace('opacity-100', 'opacity-0');
+                document.getElementById('product-modal-content').classList.replace('scale-100', 'scale-95');
+                setTimeout(() => productEl.classList.add('hidden'), 200);
+            }
+        });
 
         function initApp() {
             updateCartUI();
@@ -317,7 +336,10 @@
                     document.title = `${catalogConfig['Titulo']} - Forwarder Venture`;
                     document.getElementById('banner-title').innerText = catalogConfig['Titulo'];
                     document.getElementById('banner-desc').innerText = catalogConfig['Descripción'];
-                    document.getElementById('main-logo').src = catalogConfig['Logo'] || catalogConfig['Imagen Logo'] || 'logo.png';
+                    
+                    const logoUrl = catalogConfig['Logo'] || catalogConfig['Imagen Logo'] || 'logo.png';
+                    document.getElementById('main-logo').src = logoUrl;
+                    document.getElementById('dynamic-favicon').href = logoUrl;
                     
                     if(catalogConfig['Imagen Banner']) {
                         document.getElementById('banner-section').style.backgroundImage = `linear-gradient(90deg, rgba(0,46,95,0.95) 0%, rgba(0,46,95,0.6) 100%), url('${catalogConfig['Imagen Banner']}')`;
@@ -342,9 +364,8 @@
                         if (!row['NOMBRE'] && !sku) return;
                         if ((row['VISIBLE'] || '').toString().trim().toUpperCase() === 'NO') return;
 
-                        // NUEVO PARSEO DE PRECIOS: Ignora ,00 o .00 al final y luego saca los números
                         let pStr = (row['PRECIO DE VENTA'] || row['PRECIO 1'] || '0').toString();
-                        pStr = pStr.replace(/[,.]\d{2}$/, ''); // Remueve decimales al final
+                        pStr = pStr.replace(/[,.]\d{2}$/, ''); 
                         const precioVenta = parseInt(pStr.replace(/\D/g, '')) || 0;
                         
                         const mainVarStr = row['VARIABLE'] || row['CAPACIDAD/RAM'] || row['CAPACIDAD'] || '';
@@ -361,7 +382,7 @@
                                 nombre: row['NOMBRE']?.trim() || 'Producto',
                                 descripcion: descStr,
                                 tipo: (row['TIPO'] || row['MARCA'] || 'General').trim(),
-                                mainImg: mainImgOverride, // Guarda la imagen principal
+                                mainImg: mainImgOverride, 
                                 index: index,
                                 skuMap: {}
                             };
@@ -380,7 +401,6 @@
                     applyFilters();
                     window.addEventListener('scroll', handleScroll);
                     
-                    // REVISAR SI HAY UN LINK DIRECTO
                     const pQuery = getUrlParameter('p');
                     if (pQuery) setTimeout(() => openModal(pQuery), 500);
                 }
@@ -427,9 +447,9 @@
             const slice = filteredGroups.slice(currentStartIndex, currentStartIndex + ITEMS_PER_PAGE);
             if (slice.length > 0) {
                 grid.insertAdjacentHTML('beforeend', slice.map(p => {
-                    const displayImg = p.mainImg || p.variaciones[0].imgs[0]; // Usa imagen principal si existe
+                    const displayImg = p.mainImg || p.variaciones[0].imgs[0]; 
                     return `
-                    <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1 group" onclick="openModal('${p.id}')">
+                    <div class="bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 flex flex-col cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1 group" onclick="openModal('${p.id}')">
                         <div class="aspect-square relative bg-white overflow-hidden p-3">
                             <img src="${displayImg}" loading="lazy" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/400?text=FV'">
                             <div class="absolute top-2 left-2 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[8px] font-black uppercase text-fv-blue border border-gray-100 shadow-sm">${p.tipo}</div>
@@ -438,7 +458,10 @@
                             <h3 class="font-bold text-[11px] md:text-xs text-fv-blue leading-tight mb-2 h-8 line-clamp-2 uppercase">${p.nombre}</h3>
                             <div class="mt-auto flex justify-between items-center pt-2">
                                 <p class="text-sm md:text-base font-black text-fv-blue">${formatMoney(p.variaciones[0].precio)}</p>
-                                <button onclick="quickAdd(event, '${p.id}')" class="w-8 h-8 bg-gray-50 text-fv-blue rounded-lg flex items-center justify-center hover:bg-fv-blue hover:text-white transition shadow-sm border border-gray-200"><i class="fa-solid fa-plus text-xs"></i></button>
+                                <div class="flex gap-1">
+                                    <button onclick="quickShare(event, '${p.id}')" class="w-8 h-8 bg-[#F0FDF4] text-[#16A34A] rounded-lg flex items-center justify-center hover:bg-green-100 transition shadow-sm border border-green-100" title="Consultar"><i class="fa-brands fa-whatsapp text-sm"></i></button>
+                                    <button onclick="quickAdd(event, '${p.id}')" class="w-8 h-8 bg-gray-50 text-fv-blue rounded-lg flex items-center justify-center hover:bg-fv-blue hover:text-white transition shadow-sm border border-gray-200"><i class="fa-solid fa-plus text-xs"></i></button>
+                                </div>
                             </div>
                         </div>
                     </div>`;
@@ -458,7 +481,7 @@
             currentVariable = selectedGroup.variaciones[0].variable;
             currentExtra = selectedGroup.variaciones[0].extra;
             
-            setUrlParameter('p', groupId); // CREA EL LINK ÚNICO
+            setUrlParameter('p', groupId); 
             
             updateVariantSelectionUI();
             const modal = document.getElementById('product-modal');
@@ -491,7 +514,7 @@
         function selectVariable(v) { currentVariable = v; updateVariantSelectionUI(); }
         function selectExtra(e) { currentExtra = e; updateVariantSelectionUI(); }
         function closeModal() {
-            setUrlParameter('p', null); // REMUEVE EL LINK AL CERRAR
+            setUrlParameter('p', null); 
             const m = document.getElementById('product-modal'); m.classList.replace('opacity-100', 'opacity-0');
             document.getElementById('product-modal-content').classList.replace('scale-100', 'scale-95');
             setTimeout(() => m.classList.add('hidden'), 200);
@@ -523,16 +546,21 @@
         function changeQty(i, delta) { cart[i].qty += delta; if(cart[i].qty <= 0) cart.splice(i, 1); updateCartUI(); }
         function removeFromCart(i) { cart.splice(i, 1); updateCartUI(); }
         function clearCartConfirm() { if(cart.length > 0 && confirm("¿Vaciar carrito?")) { cart = []; updateCartUI(); } }
-        function forceClearCart() { cart = []; updateCartUI(); toggleCart(); }
         
         function toggleCart() { 
-            document.getElementById('cart-modal').classList.toggle('hidden'); 
-            document.getElementById('cart-items-view').classList.remove('hidden');
-            document.getElementById('checkout-form-view').classList.add('hidden');
-            document.getElementById('success-view').classList.add('hidden');
-            document.getElementById('cart-footer-area').classList.remove('hidden');
-            document.getElementById('cart-footer-buttons').classList.remove('hidden');
-            document.getElementById('checkout-footer-buttons').classList.add('hidden');
+            const cartEl = document.getElementById('cart-modal');
+            if (cartEl.classList.contains('hidden')) {
+                cartEl.classList.remove('hidden');
+                document.getElementById('cart-items-view').classList.remove('hidden');
+                document.getElementById('checkout-form-view').classList.add('hidden');
+                document.getElementById('success-view').classList.add('hidden');
+                document.getElementById('cart-footer-area').classList.remove('hidden');
+                document.getElementById('cart-footer-buttons').classList.remove('hidden');
+                document.getElementById('checkout-footer-buttons').classList.add('hidden');
+                window.history.pushState({ modalOpen: true }, ''); // Para el botón atrás
+            } else {
+                cartEl.classList.add('hidden');
+            }
         }
         
         function showCheckoutForm() {
@@ -552,7 +580,6 @@
 
         function showToast() { const t = document.getElementById('toast'); t.classList.replace('opacity-0', 'opacity-100'); t.classList.replace('translate-y-[-20px]', 'translate-y-0'); setTimeout(() => { t.classList.replace('opacity-100', 'opacity-0'); t.classList.replace('translate-y-0', 'translate-y-[-20px]'); }, 2000); }
 
-        // CHECKOUT SILENCIOSO (Simulado hasta conectar el Webhook)
         function submitSilentOrder() {
             const nombre = document.getElementById('chk-nombre').value.trim();
             const tel = document.getElementById('chk-telefono').value.trim();
@@ -566,15 +593,9 @@
 
             const orderData = { cliente: { nombre, tel, dir }, pedido: cart, total: document.getElementById('cart-total').innerText, catalogo: catalogConfig ? catalogConfig['Nombre Catálogo'] : 'General' };
 
-            if(WEBHOOK_URL !== '') {
-                // Si ya tienes el App Script conectado:
-                fetch(WEBHOOK_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(orderData) })
-                .then(() => showSuccessScreen())
-                .catch(() => { alert("Error de conexión. Intenta de nuevo."); resetBtn(btn); });
-            } else {
-                // Simulación mientras creas el Webhook
-                setTimeout(() => showSuccessScreen(), 1500);
-            }
+            fetch(WEBHOOK_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(orderData) })
+            .then(() => showSuccessScreen())
+            .catch(() => { alert("Error de conexión. Intenta de nuevo."); resetBtn(btn); });
         }
 
         function showSuccessScreen() {
@@ -588,9 +609,35 @@
 
         function shareSingleProduct() {
             const catName = catalogConfig ? catalogConfig['Nombre Catálogo'] : 'Catálogo';
-            const link = window.location.href; // Ya tiene el parametro ?p=
+            const link = window.location.href; 
             const text = `Hola, vengo del catálogo de *${catName.toUpperCase()}*.%0AQuiero consultar sobre este producto:%0A*${selectedGroup.nombre}*%0A${link}`;
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function quickShare(event, id) {
+            event.stopPropagation();
+            const g = allGroups.find(p => p.id === id);
+            const catName = catalogConfig ? catalogConfig['Nombre Catálogo'] : 'Catálogo';
+            const link = `${window.location.origin}${window.location.pathname}?cat=${encodeURIComponent(catName)}&p=${id}`;
+            const text = `Hola, vengo del catálogo de *${catName.toUpperCase()}*.%0AQuiero consultar sobre este producto:%0A*${g.nombre}*%0A${link}`;
+            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
+        }
+        
+        function sendOrderWhatsApp() {
+            if(cart.length === 0) return;
+            const catName = catalogConfig ? catalogConfig['Nombre Catálogo'] : 'Catálogo';
+            let msg = `🛍️ *NUEVO PEDIDO RÁPIDO - ${catName.toUpperCase()}*%0A%0A`;
+            
+            cart.forEach(item => {
+                const labels = [item.variable, item.extra].filter(x=>x).join(' / ');
+                const labelStr = labels ? ` [${labels}]` : '';
+                msg += `• ${item.qty}x [SKU: ${item.sku}] *${item.nombre}*${labelStr} - ${formatMoney(item.precio * item.qty)}%0A`;
+            });
+            
+            msg += `%0A*TOTAL A PAGAR: ${document.getElementById('cart-total').innerText}*%0A_Por favor, confírmame la disponibilidad._`;
+            
+            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
+            setTimeout(() => { cart = []; updateCartUI(); toggleCart(); }, 1000); 
         }
 
         initApp();
