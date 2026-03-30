@@ -48,7 +48,7 @@
         
         <header class="bg-white/95 backdrop-blur-md px-6 py-4 sticky top-0 z-50 flex justify-between items-center border-b border-gray-100 shadow-sm h-[80px]">
             <img id="main-logo" src="logo.png" alt="Forwarder Venture" class="w-[120px] md:w-[150px] object-contain" onerror="this.src='https://via.placeholder.com/150x40?text=FORWARDER'">
-            <button onclick="toggleCart()" class="hidden md:flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-xl hover:bg-gray-100 transition border border-gray-200">
+            <button onclick="toggleCart()" class="hidden md:flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-xl hover:bg-gray-100 transition border border-gray-200 shadow-sm">
                 <i class="fa-solid fa-cart-shopping text-xl text-fv-blue"></i>
                 <span class="font-black text-sm">Mi Carrito</span>
                 <span id="header-cart-count" class="bg-orange-600 text-white text-[10px] font-bold px-2 py-1 rounded-full">0</span>
@@ -57,14 +57,13 @@
 
         <section id="banner-section" class="banner-hero p-8 md:p-20 flex items-center min-h-[250px] md:min-h-[350px] relative overflow-hidden" style="background-image: linear-gradient(90deg, rgba(0,46,95,0.95) 0%, rgba(0,46,95,0.7) 100%);">
             <div class="relative z-10 max-w-3xl text-white">
-                <span class="bg-orange-600 text-white px-3 py-1 font-black text-xs uppercase tracking-widest mb-4 inline-block rounded-sm">Catálogo Oficial</span>
+                <span class="bg-orange-600 text-white px-3 py-1 font-black text-xs uppercase tracking-widest mb-4 inline-block rounded-sm shadow-md">Catálogo Oficial</span>
                 <h1 id="banner-title" class="text-4xl md:text-6xl font-black leading-none mb-4 uppercase drop-shadow-md">Cargando...</h1>
                 <p id="banner-desc" class="text-gray-100 text-sm md:text-lg font-medium max-w-xl drop-shadow">Preparando los mejores productos para ti.</p>
             </div>
         </section>
 
         <div class="flex flex-col md:flex-row flex-grow relative">
-            
             <aside class="md:w-72 bg-white md:border-r border-b md:border-b-0 border-gray-100 md:sticky md:top-[80px] md:h-[calc(100vh-80px)] md:overflow-y-auto shrink-0 z-40">
                 <div class="p-6 space-y-6">
                     <div>
@@ -97,7 +96,6 @@
 
             <main class="flex-1 p-6 md:p-8 bg-gray-50/30 pb-32">
                 <div id="product-grid" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"></div>
-                
                 <div id="scroll-loader" class="hidden w-full pt-10">
                     <div class="loader"></div>
                     <p class="text-center text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-2">Cargando productos...</p>
@@ -108,7 +106,7 @@
         <footer class="bg-gray-900 text-white py-12 px-6 border-t-4 border-fv-blue text-center">
             <h2 class="text-2xl font-black mb-2 tracking-tighter uppercase">FORWARDER VENTURE</h2>
             <div class="flex justify-center gap-6 my-6">
-                <a href="https://wa.me/573114957971" target="_blank" class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center hover:scale-110 transition shadow-lg">
+                <a href="https://wa.me/573114957971" target="_blank" class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center hover:scale-110 transition shadow-lg shadow-green-900/30">
                     <i class="fa-brands fa-whatsapp text-2xl"></i>
                 </a>
             </div>
@@ -117,18 +115,18 @@
         </footer>
     </div>
 
-    <a href="https://wa.me/573114957971?text=Hola,%20quisiera%20hacer%20una%20consulta%20general%20sobre%20sus%20productos." target="_blank" class="fab-wa bg-[#25D366] text-white w-14 h-14 rounded-full flex items-center justify-center">
+    <a href="https://wa.me/573114957971?text=Hola,%20quisiera%20hacer%20una%20consulta%20general%20sobre%20sus%20productos." target="_blank" class="fab-wa bg-[#25D366] text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-green-500/30">
         <i class="fa-brands fa-whatsapp text-3xl"></i>
     </a>
 
-    <button onclick="toggleCart()" class="md:hidden fab-cart w-14 h-14 bg-fv-blue text-white rounded-full flex items-center justify-center">
+    <button onclick="toggleCart()" class="md:hidden fab-cart w-14 h-14 bg-fv-blue text-white rounded-full flex items-center justify-center shadow-lg shadow-fv-blue/30">
         <i class="fa-solid fa-cart-shopping text-xl"></i>
         <span id="fab-cart-count" class="absolute -top-1 -right-1 bg-orange-600 text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-white">0</span>
     </button>
 
     <div id="product-modal" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0">
         <div class="bg-white w-full max-w-xl rounded-3xl overflow-hidden relative shadow-2xl transform scale-95 transition-all flex flex-col max-h-[95vh]" id="product-modal-content">
-            <button onclick="closeModal()" class="absolute top-4 right-4 w-10 h-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center z-20 text-gray-800 shadow-sm"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="closeModal()" class="absolute top-4 right-4 w-10 h-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center z-20 text-gray-800 shadow-sm hover:bg-gray-100 transition"><i class="fa-solid fa-xmark"></i></button>
             
             <div class="bg-gray-50 border-b border-gray-100 p-6 flex flex-col items-center shrink-0">
                 <div class="h-48 md:h-64 flex items-center justify-center w-full relative">
@@ -139,7 +137,9 @@
 
             <div class="p-6 md:p-8 overflow-y-auto flex-grow bg-white">
                 <span id="modal-type" class="text-orange-600 font-black text-[9px] uppercase tracking-widest"></span>
-                <h2 id="modal-title" class="text-xl md:text-2xl font-black text-fv-blue mt-1 mb-4 leading-tight uppercase"></h2>
+                <h2 id="modal-title" class="text-xl md:text-2xl font-black text-fv-blue mt-1 mb-2 leading-tight uppercase"></h2>
+                
+                <p id="modal-desc" class="text-xs text-gray-500 mb-6 hidden"></p>
                 
                 <div id="variant-section" class="mb-4 hidden">
                     <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Variante principal:</label>
@@ -170,10 +170,13 @@
         <div class="bg-white w-full max-w-md h-full flex flex-col shadow-2xl animate-slide-up md:animate-none">
             <div class="p-6 border-b flex justify-between items-center bg-white shrink-0">
                 <div>
-                    <h2 class="text-2xl font-black text-fv-blue uppercase tracking-tighter leading-none">Checkout</h2>
-                    <span class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Revisa tu pedido</span>
+                    <h2 class="text-2xl font-black text-fv-blue uppercase tracking-tighter leading-none">Mi Pedido</h2>
+                    <span class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Revisa tus productos</span>
                 </div>
-                <button onclick="toggleCart()" class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-xmark"></i></button>
+                <div class="flex gap-2">
+                    <button onclick="clearCartConfirm()" class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center text-red-500 hover:bg-red-100 transition shadow-sm" title="Vaciar carrito"><i class="fa-solid fa-trash-can"></i></button>
+                    <button onclick="toggleCart()" class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 transition"><i class="fa-solid fa-xmark"></i></button>
+                </div>
             </div>
             
             <div id="cart-items-view" class="flex-grow overflow-y-auto bg-gray-50/50 flex flex-col">
@@ -186,34 +189,36 @@
                 <div class="space-y-4">
                     <div>
                         <label class="text-[10px] font-black text-gray-400 uppercase mb-1 block">Nombre Completo *</label>
-                        <input type="text" id="chk-nombre" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-fv-blue" placeholder="Ej. Juan Pérez">
+                        <input type="text" id="chk-nombre" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-fv-blue">
                     </div>
                     <div>
                         <label class="text-[10px] font-black text-gray-400 uppercase mb-1 block">Teléfono *</label>
-                        <input type="tel" id="chk-telefono" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-fv-blue" placeholder="Ej. 300 123 4567">
+                        <input type="tel" id="chk-telefono" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-fv-blue">
                     </div>
                     <div>
                         <label class="text-[10px] font-black text-gray-400 uppercase mb-1 block">Dirección de Entrega *</label>
-                        <input type="text" id="chk-direccion" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-fv-blue" placeholder="Ej. Calle 123 #45-67, Apto 1">
-                    </div>
-                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 mt-4">
-                        <p class="text-xs text-blue-800 font-bold"><i class="fa-solid fa-circle-info mr-1"></i> El medio de pago se acordará directamente con nuestro asesor una vez confirmado el pedido.</p>
+                        <input type="text" id="chk-direccion" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-fv-blue">
                     </div>
                 </div>
             </div>
+
+            <div id="success-view" class="hidden flex-grow flex flex-col items-center justify-center p-8 bg-white text-center">
+                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <i class="fa-solid fa-check text-4xl text-green-500"></i>
+                </div>
+                <h3 class="font-black text-2xl text-fv-blue uppercase mb-2">¡Pedido Exitoso!</h3>
+                <p class="text-sm text-gray-500 mb-6">Hemos recibido tu orden y nos pondremos en contacto contigo pronto para coordinar el pago y envío.</p>
+                <button onclick="toggleCart()" class="bg-fv-blue text-white py-3 px-8 rounded-xl font-bold uppercase tracking-wide shadow-md hover:opacity-90">Entendido</button>
+            </div>
             
-            <div class="p-6 border-t bg-white shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
+            <div id="cart-footer-area" class="p-6 border-t bg-white shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
                 <div class="space-y-2 mb-6">
                     <div class="flex justify-between text-sm text-gray-500 font-bold">
                         <span>Subtotal</span>
                         <span id="cart-subtotal">$0</span>
                     </div>
-                    <div class="flex justify-between text-xs text-gray-400 uppercase tracking-widest">
-                        <span>Impuestos (IVA)</span>
-                        <span>No incl.</span>
-                    </div>
                     <div class="flex justify-between items-end pt-4 border-t border-gray-100">
-                        <span class="font-black text-fv-blue uppercase text-sm">Total Estimado</span>
+                        <span class="font-black text-fv-blue uppercase text-sm">Total</span>
                         <span id="cart-total" class="text-3xl font-black text-fv-blue">$0</span>
                     </div>
                 </div>
@@ -222,14 +227,11 @@
                     <button onclick="showCheckoutForm()" class="w-full bg-fv-blue text-white py-4 rounded-xl font-black text-sm flex items-center justify-center gap-3 hover:bg-[#001f40] transition shadow-lg uppercase tracking-wide">
                         Completar Pedido <i class="fa-solid fa-arrow-right"></i>
                     </button>
-                    <button onclick="sendOrderWhatsApp()" class="w-full bg-[#25D366] text-white py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#128C7E] transition uppercase">
-                        <i class="fa-brands fa-whatsapp text-lg"></i> Pedido Rápido por Chat
-                    </button>
                 </div>
 
                 <div id="checkout-footer-buttons" class="hidden grid grid-cols-1 gap-3">
-                    <button onclick="submitOrder()" class="w-full bg-[#25D366] text-white py-4 rounded-xl font-black text-sm flex items-center justify-center gap-3 hover:bg-[#128C7E] transition shadow-lg shadow-green-500/30 uppercase tracking-wide">
-                        <i class="fa-brands fa-whatsapp text-xl"></i> Confirmar y Enviar
+                    <button id="btn-submit-order" onclick="submitSilentOrder()" class="w-full bg-fv-orange text-white py-4 rounded-xl font-black text-sm flex items-center justify-center gap-3 hover:bg-[#cc5200] transition shadow-lg uppercase tracking-wide">
+                        Confirmar y Enviar
                     </button>
                 </div>
             </div>
@@ -245,10 +247,13 @@
         const SHEET_ID = '17a0Pxq1EOLRf86yiuM014ZluVqL2Qj1Mt8cKRDenjHc';
         const MASTER_GID = '846871297'; 
         
+        // AQUÍ VA LA URL DE TU WEBHOOK (Google Apps Script)
+        const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwb00bKe9mVa_-Xa-fA32Qp1Vk__MnUeb7MCvTun6nKScrNQNrgyKZmGzoLChbFmtIg/exec'; 
+        
         let catalogConfig = null;
         let allGroups = [];
         let filteredGroups = [];
-        let cart = [];
+        let cart = JSON.parse(localStorage.getItem('fv_cart_memory')) || [];
         let currentCategory = 'Ver Todo';
         
         let selectedGroup = null;
@@ -274,158 +279,126 @@
             return text.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
         }
 
-        // 1. INICIALIZACIÓN: Leer Hoja Maestra y auto-detectar enlace
-        function initApp() {
-            const currentUrl = window.location.href.toLowerCase();
+        function saveCartMemory() {
+            localStorage.setItem('fv_cart_memory', JSON.stringify(cart));
+        }
+
+        function getUrlParameter(name) {
             const urlParams = new URLSearchParams(window.location.search);
-            const catQuery = urlParams.get('cat')?.toLowerCase(); 
+            return urlParams.get(name);
+        }
+
+        function setUrlParameter(key, value) {
+            const url = new URL(window.location);
+            if (value) url.searchParams.set(key, value);
+            else url.searchParams.delete(key);
+            window.history.pushState({}, '', url);
+        }
+
+        function initApp() {
+            updateCartUI();
+            const currentUrl = window.location.href.toLowerCase();
+            const catQuery = getUrlParameter('cat')?.toLowerCase(); 
             
-            const masterUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${MASTER_GID}`;
-            
-            Papa.parse(masterUrl, {
+            Papa.parse(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${MASTER_GID}`, {
                 download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
-                    
-                    // 1. Intentar hacer match analizando la URL en la que está publicada la página
                     for (let row of results.data) {
                         const enlace = row['Enlace']?.trim().toLowerCase();
-                        // Compara limpiando la URL de www, http y el / final para evitar errores
                         if (enlace && currentUrl.includes(enlace.replace(/https?:\/\/(www\.)?/,'').replace(/\/$/, ''))) {
-                            catalogConfig = row;
-                            break;
+                            catalogConfig = row; break;
                         }
                     }
-                    
-                    // 2. Si no coincide la URL (ej. pruebas locales), busca por parámetro ?cat=
-                    if (!catalogConfig && catQuery) {
-                        catalogConfig = results.data.find(r => removeAccentsAndLower(r['Nombre Catálogo']) === catQuery);
-                    }
-                    
-                    // 3. Fallback: Si no hay nada, carga la primera fila de tu hoja
-                    if (!catalogConfig && results.data.length > 0) {
-                        catalogConfig = results.data[0];
-                    }
+                    if (!catalogConfig && catQuery) catalogConfig = results.data.find(r => removeAccentsAndLower(r['Nombre Catálogo']) === catQuery);
+                    if (!catalogConfig && results.data.length > 0) catalogConfig = results.data[0];
 
-                    if(!catalogConfig) {
-                        alert("No se pudo configurar el catálogo.");
-                        return;
-                    }
+                    if(!catalogConfig) { alert("Error de configuración."); return; }
 
-                    // Actualizar Textos y Logo
                     document.title = `${catalogConfig['Titulo']} - Forwarder Venture`;
                     document.getElementById('banner-title').innerText = catalogConfig['Titulo'];
                     document.getElementById('banner-desc').innerText = catalogConfig['Descripción'];
+                    document.getElementById('main-logo').src = catalogConfig['Logo'] || catalogConfig['Imagen Logo'] || 'logo.png';
                     
-                    const logoUrl = catalogConfig['Logo'] || catalogConfig['Imagen Logo'] || 'logo.png';
-                    document.getElementById('main-logo').src = logoUrl;
-                    
-                    const bannerUrl = catalogConfig['Imagen Banner'];
-                    if(bannerUrl) {
-                        document.getElementById('banner-section').style.backgroundImage = `linear-gradient(90deg, rgba(0,46,95,0.95) 0%, rgba(0,46,95,0.6) 100%), url('${bannerUrl}')`;
+                    if(catalogConfig['Imagen Banner']) {
+                        document.getElementById('banner-section').style.backgroundImage = `linear-gradient(90deg, rgba(0,46,95,0.95) 0%, rgba(0,46,95,0.6) 100%), url('${catalogConfig['Imagen Banner']}')`;
                     }
 
-                    // Extraer GID de la columna específica GID Hoja
-                    let catalogGid = catalogConfig['GID Hoja']?.toString().trim();
-                    
-                    if(!catalogGid) {
-                        // Por compatibilidad si lo dejaron dentro de "Enlace"
-                        const link = catalogConfig['Enlace'] || '';
-                        const gidMatch = link.match(/gid=([0-9]+)/);
-                        catalogGid = gidMatch ? gidMatch[1] : '0';
-                    }
-                    
+                    let catalogGid = catalogConfig['GID Hoja']?.toString().trim() || (catalogConfig['Enlace']?.match(/gid=([0-9]+)/) || [])[1] || '0';
                     loadProductsData(catalogGid);
                 }
             });
         }
 
-        // 2. CARGAR DATOS DEL CATÁLOGO ESPECÍFICO
         function loadProductsData(gid) {
-            const dataUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
-            
-            Papa.parse(dataUrl, {
+            Papa.parse(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`, {
                 download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
                     const tempGroups = {};
                     
                     results.data.forEach((row, index) => {
                         const sku = row['SKU']?.toString().trim();
-                        let pSku = row['PARENT SKU']?.toString().trim();
-                        if(!pSku) pSku = sku || `FILA-${index}`;
+                        let pSku = row['PARENT SKU']?.toString().trim() || sku || `FILA-${index}`;
                         
                         if (!row['NOMBRE'] && !sku) return;
                         if ((row['VISIBLE'] || '').toString().trim().toUpperCase() === 'NO') return;
 
+                        // NUEVO PARSEO DE PRECIOS: Ignora ,00 o .00 al final y luego saca los números
                         let pStr = (row['PRECIO DE VENTA'] || row['PRECIO 1'] || '0').toString();
+                        pStr = pStr.replace(/[,.]\d{2}$/, ''); // Remueve decimales al final
                         const precioVenta = parseInt(pStr.replace(/\D/g, '')) || 0;
                         
-                        const tipoFinal = row['TIPO'] || row['MARCA'] || 'General';
-                        
-                        let mainVarStr = row['VARIABLE'] || row['CAPACIDAD/RAM'] || row['CAPACIDAD'] || '';
-                        if(row['RAM'] && !mainVarStr.includes(row['RAM'])) mainVarStr += ` ${row['RAM']}`;
-                        
-                        let extraStr = row['EXTRA'] || row['COLOR'] || row['CARACTERISTICAS'] || '';
+                        const mainVarStr = row['VARIABLE'] || row['CAPACIDAD/RAM'] || row['CAPACIDAD'] || '';
+                        const extraStr = row['EXTRA'] || row['COLOR'] || row['CARACTERISTICAS'] || '';
+                        const descStr = row['DESCRIPCIÓN'] || row['DESCRIPCION'] || '';
+                        const mainImgOverride = row['IMAGEN PRINCIPAL'] || '';
 
-                        const rawImgs = (row['IMAGEN'] || '').split('|')
-                            .map(i => i.trim())
-                            .filter(i => i.startsWith('http') && !i.includes('cloudinary'));
+                        const rawImgs = (row['IMAGEN'] || '').split('|').map(i => i.trim()).filter(i => i.startsWith('http') && !i.includes('cloudinary'));
                         const imgs = rawImgs.length > 0 ? rawImgs : ['https://via.placeholder.com/400?text=Sin+Imagen'];
 
                         if (!tempGroups[pSku]) {
                             tempGroups[pSku] = {
                                 id: pSku,
                                 nombre: row['NOMBRE']?.trim() || 'Producto',
-                                tipo: tipoFinal.trim(),
+                                descripcion: descStr,
+                                tipo: (row['TIPO'] || row['MARCA'] || 'General').trim(),
+                                mainImg: mainImgOverride, // Guarda la imagen principal
                                 index: index,
                                 skuMap: {}
                             };
                         }
 
-                        const safeVariable = superClean(mainVarStr);
-                        const safeExtra = superClean(extraStr);
-
                         if (!tempGroups[pSku].skuMap[sku]) {
-                            tempGroups[pSku].skuMap[sku] = {
-                                sku: sku, variable: safeVariable, extra: safeExtra, imgs: imgs, precio: precioVenta
-                            };
-                        } else {
-                            if (precioVenta > tempGroups[pSku].skuMap[sku].precio) {
-                                tempGroups[pSku].skuMap[sku].precio = precioVenta;
-                            }
+                            tempGroups[pSku].skuMap[sku] = { sku: sku, variable: superClean(mainVarStr), extra: superClean(extraStr), imgs: imgs, precio: precioVenta };
+                        } else if (precioVenta > tempGroups[pSku].skuMap[sku].precio) {
+                            tempGroups[pSku].skuMap[sku].precio = precioVenta;
                         }
                     });
 
-                    allGroups = Object.values(tempGroups).map(g => ({ ...g, variaciones: Object.values(g.skuMap) }));
-                    allGroups = allGroups.filter(g => g.variaciones.length > 0);
+                    allGroups = Object.values(tempGroups).map(g => ({ ...g, variaciones: Object.values(g.skuMap) })).filter(g => g.variaciones.length > 0);
 
                     updateCategoryNav();
                     applyFilters();
                     window.addEventListener('scroll', handleScroll);
+                    
+                    // REVISAR SI HAY UN LINK DIRECTO
+                    const pQuery = getUrlParameter('p');
+                    if (pQuery) setTimeout(() => openModal(pQuery), 500);
                 }
             });
         }
 
-        // 3. UI Y NAVEGACIÓN
         function updateCategoryNav() {
             const types = ['Ver Todo', ...new Set(allGroups.map(p => p.tipo))].sort();
             document.getElementById('category-nav').innerHTML = types.map(t => {
-                const isActive = t === currentCategory;
-                const baseClass = "px-4 py-2 md:py-3 rounded-xl text-[10px] md:text-xs font-black whitespace-nowrap transition-all border text-left";
-                const colorClass = isActive ? "bg-fv-blue text-white border-fv-blue shadow-md" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50";
-                return `<button onclick="filterType('${t}')" class="${baseClass} ${colorClass}">${t.toUpperCase()}</button>`;
+                return `<button onclick="filterType('${t}')" class="px-4 py-2 md:py-3 rounded-xl text-[10px] md:text-xs font-black whitespace-nowrap transition-all border text-left ${t === currentCategory ? "bg-fv-blue text-white border-fv-blue shadow-md" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}">${t.toUpperCase()}</button>`;
             }).join('');
         }
 
         function filterType(t) { currentCategory = t; updateCategoryNav(); applyFilters(); }
-
-        function debounceSearch() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(applyFilters, 300);
-        }
+        function debounceSearch() { clearTimeout(searchTimeout); searchTimeout = setTimeout(applyFilters, 300); }
 
         function applyFilters() {
-            const rawSearch = document.getElementById('search-input').value;
-            const searchTerms = removeAccentsAndLower(rawSearch).split(' ').filter(t => t.length > 0);
+            const searchTerms = removeAccentsAndLower(document.getElementById('search-input').value).split(' ').filter(t => t.length > 0);
             const sortMode = document.getElementById('sort-select').value;
 
             filteredGroups = allGroups.filter(p => {
@@ -439,9 +412,7 @@
             else if (sortMode === 'az') filteredGroups.sort((a, b) => a.nombre.localeCompare(b.nombre));
             else if (sortMode === 'recent') filteredGroups.sort((a, b) => b.index - a.index);
 
-            currentStartIndex = 0;
-            document.getElementById('product-grid').innerHTML = ''; 
-            loadMoreProducts();
+            currentStartIndex = 0; document.getElementById('product-grid').innerHTML = ''; loadMoreProducts();
         }
 
         function loadMoreProducts() {
@@ -450,152 +421,118 @@
             
             if (filteredGroups.length === 0 && currentStartIndex === 0) {
                 grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-400 font-bold uppercase text-[10px]">No se encontraron resultados</div>';
-                loader.classList.add('hidden');
-                return;
+                loader.classList.add('hidden'); return;
             }
 
-            const sliceToRender = filteredGroups.slice(currentStartIndex, currentStartIndex + ITEMS_PER_PAGE);
-            
-            if (sliceToRender.length > 0) {
-                const html = sliceToRender.map(p => {
-                    const main = p.variaciones[0];
+            const slice = filteredGroups.slice(currentStartIndex, currentStartIndex + ITEMS_PER_PAGE);
+            if (slice.length > 0) {
+                grid.insertAdjacentHTML('beforeend', slice.map(p => {
+                    const displayImg = p.mainImg || p.variaciones[0].imgs[0]; // Usa imagen principal si existe
                     return `
                     <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1 group" onclick="openModal('${p.id}')">
                         <div class="aspect-square relative bg-white overflow-hidden p-3">
-                            <img src="${main.imgs[0]}" loading="lazy" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/400?text=FV'">
+                            <img src="${displayImg}" loading="lazy" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/400?text=FV'">
                             <div class="absolute top-2 left-2 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[8px] font-black uppercase text-fv-blue border border-gray-100 shadow-sm">${p.tipo}</div>
                         </div>
                         <div class="p-4 flex flex-col flex-grow bg-white border-t border-gray-50">
                             <h3 class="font-bold text-[11px] md:text-xs text-fv-blue leading-tight mb-2 h-8 line-clamp-2 uppercase">${p.nombre}</h3>
                             <div class="mt-auto flex justify-between items-center pt-2">
-                                <p class="text-sm md:text-base font-black text-fv-blue">${formatMoney(main.precio)}</p>
-                                <button onclick="quickAdd(event, '${p.id}')" class="w-8 h-8 bg-gray-50 text-fv-blue rounded-lg flex items-center justify-center hover:bg-fv-blue hover:text-white transition shadow-sm border border-gray-200 hover:border-fv-blue"><i class="fa-solid fa-plus text-xs"></i></button>
+                                <p class="text-sm md:text-base font-black text-fv-blue">${formatMoney(p.variaciones[0].precio)}</p>
+                                <button onclick="quickAdd(event, '${p.id}')" class="w-8 h-8 bg-gray-50 text-fv-blue rounded-lg flex items-center justify-center hover:bg-fv-blue hover:text-white transition shadow-sm border border-gray-200"><i class="fa-solid fa-plus text-xs"></i></button>
                             </div>
                         </div>
                     </div>`;
-                }).join('');
-                grid.insertAdjacentHTML('beforeend', html);
+                }).join(''));
                 currentStartIndex += ITEMS_PER_PAGE;
             }
             loader.classList.toggle('hidden', currentStartIndex >= filteredGroups.length);
         }
 
         function handleScroll() {
-            if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 800) {
-                if (currentStartIndex < filteredGroups.length) loadMoreProducts();
-            }
+            if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 800 && currentStartIndex < filteredGroups.length) loadMoreProducts();
         }
 
-        // 4. MODAL Y VARIANTES
         function openModal(groupId) {
             selectedGroup = allGroups.find(p => p.id === groupId);
             if(!selectedGroup) return;
             currentVariable = selectedGroup.variaciones[0].variable;
             currentExtra = selectedGroup.variaciones[0].extra;
+            
+            setUrlParameter('p', groupId); // CREA EL LINK ÚNICO
+            
             updateVariantSelectionUI();
             const modal = document.getElementById('product-modal');
             modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.replace('opacity-0', 'opacity-100');
-                document.getElementById('product-modal-content').classList.replace('scale-95', 'scale-100');
-            }, 10);
+            setTimeout(() => { modal.classList.replace('opacity-0', 'opacity-100'); document.getElementById('product-modal-content').classList.replace('scale-95', 'scale-100'); }, 10);
         }
 
         function updateVariantSelectionUI() {
-            let variant = selectedGroup.variaciones.find(v => v.variable === currentVariable && v.extra === currentExtra) || selectedGroup.variaciones[0];
-            selectedVariant = variant;
+            selectedVariant = selectedGroup.variaciones.find(v => v.variable === currentVariable && v.extra === currentExtra) || selectedGroup.variaciones[0];
             document.getElementById('modal-img').src = selectedVariant.imgs[0];
             document.getElementById('modal-price').innerText = formatMoney(selectedVariant.precio);
             document.getElementById('modal-title').innerText = selectedGroup.nombre;
             document.getElementById('modal-type').innerText = selectedGroup.tipo;
 
+            const descEl = document.getElementById('modal-desc');
+            if (selectedGroup.descripcion) { descEl.innerText = selectedGroup.descripcion; descEl.classList.remove('hidden'); } 
+            else { descEl.classList.add('hidden'); }
+
             const uniqueVars = [...new Set(selectedGroup.variaciones.map(v => v.variable).filter(v => v !== ''))];
             const vS = document.getElementById('variant-section');
             vS.classList.toggle('hidden', uniqueVars.length === 0);
-            if (uniqueVars.length > 0) {
-                document.getElementById('variant-container').innerHTML = uniqueVars.map(v => `
-                    <button onclick="selectVariable('${v}')" class="variant-btn ${v === currentVariable ? 'active' : ''}">${v}</button>`).join('');
-            }
+            if (uniqueVars.length > 0) document.getElementById('variant-container').innerHTML = uniqueVars.map(v => `<button onclick="selectVariable('${v}')" class="variant-btn ${v === currentVariable ? 'active' : ''}">${v}</button>`).join('');
 
             const availableExtras = [...new Set(selectedGroup.variaciones.filter(v => v.variable === currentVariable).map(v => v.extra).filter(e => e !== ''))];
             const eS = document.getElementById('extra-section');
             eS.classList.toggle('hidden', availableExtras.length === 0);
-            if (availableExtras.length > 0) {
-                document.getElementById('extra-container').innerHTML = availableExtras.map(e => `
-                    <button onclick="selectExtra('${e}')" class="variant-btn ${e === currentExtra ? 'active' : ''}">${e}</button>`).join('');
-            }
+            if (availableExtras.length > 0) document.getElementById('extra-container').innerHTML = availableExtras.map(e => `<button onclick="selectExtra('${e}')" class="variant-btn ${e === currentExtra ? 'active' : ''}">${e}</button>`).join('');
         }
 
         function selectVariable(v) { currentVariable = v; updateVariantSelectionUI(); }
         function selectExtra(e) { currentExtra = e; updateVariantSelectionUI(); }
         function closeModal() {
-            const modal = document.getElementById('product-modal');
-            modal.classList.replace('opacity-100', 'opacity-0');
+            setUrlParameter('p', null); // REMUEVE EL LINK AL CERRAR
+            const m = document.getElementById('product-modal'); m.classList.replace('opacity-100', 'opacity-0');
             document.getElementById('product-modal-content').classList.replace('scale-100', 'scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 200);
+            setTimeout(() => m.classList.add('hidden'), 200);
         }
 
-        // 5. CARRITO Y CHECKOUT
-        function quickAdd(event, id) {
-            event.stopPropagation();
-            const g = allGroups.find(p => p.id === id);
-            const v = g.variaciones[0];
-            if(!cart.find(c => c.sku === v.sku)) cart.push({ ...v, nombre: g.nombre, qty: 1 });
-            updateCartUI(); showToast();
-        }
-
-        function addToCartFromModal() {
-            const existing = cart.find(c => c.sku === selectedVariant.sku);
-            if(existing) existing.qty += 1;
-            else cart.push({ ...selectedVariant, nombre: selectedGroup.nombre, qty: 1 });
-            updateCartUI(); closeModal(); showToast();
-        }
+        function quickAdd(event, id) { event.stopPropagation(); const v = allGroups.find(p => p.id === id).variaciones[0]; if(!cart.find(c => c.sku === v.sku)) cart.push({ ...v, nombre: allGroups.find(p => p.id === id).nombre, qty: 1 }); updateCartUI(); showToast(); }
+        function addToCartFromModal() { const ex = cart.find(c => c.sku === selectedVariant.sku); if(ex) ex.qty += 1; else cart.push({ ...selectedVariant, nombre: selectedGroup.nombre, qty: 1 }); updateCartUI(); closeModal(); showToast(); }
 
         function updateCartUI() {
+            saveCartMemory();
             const totalItems = cart.reduce((a,c) => a + c.qty, 0);
             document.getElementById('header-cart-count').innerText = totalItems;
             document.getElementById('fab-cart-count').innerText = totalItems;
             
             let totalMoney = 0;
-            document.getElementById('cart-items').innerHTML = cart.map((item, i) => {
-                const sub = item.precio * item.qty;
-                totalMoney += sub;
-                const labels = [item.variable, item.extra].filter(x=>x).join(' / ');
-                return `
-                <div class="flex gap-4 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm relative">
-                    <img src="${item.imgs[0]}" class="w-16 h-16 object-contain rounded-lg border border-gray-50 p-1">
-                    <div class="flex-grow flex flex-col justify-between">
-                        <div>
-                            <p class="font-black text-[10px] uppercase text-fv-blue line-clamp-1 pr-6">${item.nombre}</p>
-                            <p class="text-[9px] text-gray-400 font-bold uppercase mt-1">${labels}</p>
-                        </div>
-                        <div class="flex justify-between items-center mt-2">
-                            <span class="font-black text-sm text-fv-blue">${formatMoney(item.precio)}</span>
-                            <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-2 border border-gray-200">
-                                <button onclick="changeQty(${i}, -1)" class="text-gray-500 font-bold px-1 hover:text-fv-blue">-</button>
-                                <span class="text-xs font-black w-3 text-center">${item.qty}</span>
-                                <button onclick="changeQty(${i}, 1)" class="text-gray-500 font-bold px-1 hover:text-fv-blue">+</button>
-                            </div>
-                        </div>
-                    </div>
-                    <button onclick="removeFromCart(${i})" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 transition"><i class="fa-solid fa-xmark"></i></button>
-                </div>`;
-            }).join('');
-            
+            const container = document.getElementById('cart-items');
+            if(cart.length === 0) container.innerHTML = `<div class="text-center text-gray-400 py-10"><i class="fa-solid fa-basket-shopping text-4xl mb-3 opacity-20"></i><p class="text-xs font-bold uppercase tracking-widest">Tu carrito está vacío</p></div>`;
+            else {
+                container.innerHTML = cart.map((item, i) => {
+                    totalMoney += item.precio * item.qty;
+                    const labels = [item.variable, item.extra].filter(x=>x).join(' / ');
+                    return `<div class="flex gap-4 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm relative"><img src="${item.imgs[0]}" class="w-16 h-16 object-contain rounded-lg border border-gray-50 p-1"><div class="flex-grow flex flex-col justify-between"><div><p class="font-black text-[10px] uppercase text-fv-blue line-clamp-1 pr-6">${item.nombre}</p><p class="text-[9px] text-gray-400 font-bold uppercase mt-1">${labels}</p></div><div class="flex justify-between items-center mt-2"><span class="font-black text-sm text-fv-blue">${formatMoney(item.precio)}</span><div class="flex items-center gap-2 bg-gray-50 rounded-lg px-2 border border-gray-200"><button onclick="changeQty(${i}, -1)" class="text-gray-500 font-bold px-1">-</button><span class="text-xs font-black w-3 text-center">${item.qty}</span><button onclick="changeQty(${i}, 1)" class="text-gray-500 font-bold px-1">+</button></div></div></div><button onclick="removeFromCart(${i})" class="absolute top-3 right-3 text-gray-300 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button></div>`;
+                }).join('');
+            }
             document.getElementById('cart-subtotal').innerText = formatMoney(totalMoney);
             document.getElementById('cart-total').innerText = formatMoney(totalMoney);
         }
 
-        function changeQty(i, delta) {
-            cart[i].qty += delta;
-            if(cart[i].qty <= 0) cart.splice(i, 1);
-            updateCartUI();
-        }
+        function changeQty(i, delta) { cart[i].qty += delta; if(cart[i].qty <= 0) cart.splice(i, 1); updateCartUI(); }
         function removeFromCart(i) { cart.splice(i, 1); updateCartUI(); }
+        function clearCartConfirm() { if(cart.length > 0 && confirm("¿Vaciar carrito?")) { cart = []; updateCartUI(); } }
+        function forceClearCart() { cart = []; updateCartUI(); toggleCart(); }
         
         function toggleCart() { 
             document.getElementById('cart-modal').classList.toggle('hidden'); 
-            hideCheckoutForm(); 
+            document.getElementById('cart-items-view').classList.remove('hidden');
+            document.getElementById('checkout-form-view').classList.add('hidden');
+            document.getElementById('success-view').classList.add('hidden');
+            document.getElementById('cart-footer-area').classList.remove('hidden');
+            document.getElementById('cart-footer-buttons').classList.remove('hidden');
+            document.getElementById('checkout-footer-buttons').classList.add('hidden');
         }
         
         function showCheckoutForm() {
@@ -613,68 +550,49 @@
             document.getElementById('checkout-footer-buttons').classList.add('hidden');
         }
 
-        function showToast() { 
-            const t = document.getElementById('toast'); 
-            t.classList.replace('opacity-0', 'opacity-100'); 
-            t.classList.replace('translate-y-[-20px]', 'translate-y-0'); 
-            setTimeout(() => { 
-                t.classList.replace('opacity-100', 'opacity-0'); 
-                t.classList.replace('translate-y-0', 'translate-y-[-20px]'); 
-            }, 2000); 
-        }
+        function showToast() { const t = document.getElementById('toast'); t.classList.replace('opacity-0', 'opacity-100'); t.classList.replace('translate-y-[-20px]', 'translate-y-0'); setTimeout(() => { t.classList.replace('opacity-100', 'opacity-0'); t.classList.replace('translate-y-0', 'translate-y-[-20px]'); }, 2000); }
 
-        // 6. COMUNICACIÓN POR WHATSAPP
-        function sendOrderWhatsApp() {
-            if(cart.length === 0) return;
-            const catName = catalogConfig ? catalogConfig['Nombre Catálogo'] : 'Catálogo';
-            let msg = `🛍️ *NUEVO PEDIDO RÁPIDO - ${catName.toUpperCase()}*%0A%0A`;
-            
-            cart.forEach(item => {
-                const labels = [item.variable, item.extra].filter(x=>x).join(' / ');
-                const labelStr = labels ? ` [${labels}]` : '';
-                msg += `• ${item.qty}x *${item.nombre}*${labelStr} - ${formatMoney(item.precio * item.qty)}%0A`;
-            });
-            
-            msg += `%0A*TOTAL A PAGAR: ${document.getElementById('cart-total').innerText}*%0A_Por favor, confírmame la disponibilidad._`;
-            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
-        }
-
-        function submitOrder() {
+        // CHECKOUT SILENCIOSO (Simulado hasta conectar el Webhook)
+        function submitSilentOrder() {
             const nombre = document.getElementById('chk-nombre').value.trim();
             const tel = document.getElementById('chk-telefono').value.trim();
             const dir = document.getElementById('chk-direccion').value.trim();
 
-            if(!nombre || !tel || !dir) {
-                alert("Por favor completa todos los datos para coordinar el envío.");
-                return;
-            }
+            if(!nombre || !tel || !dir) { alert("Por favor completa tus datos."); return; }
 
-            const catName = catalogConfig ? catalogConfig['Nombre Catálogo'] : 'Catálogo';
-            let msg = `🛍️ *NUEVO PEDIDO CONFIRMADO - ${catName.toUpperCase()}*%0A%0A`;
-            msg += `*DATOS DEL CLIENTE:*%0A`;
-            msg += `👤 Nombre: ${nombre}%0A`;
-            msg += `📱 Teléfono: ${tel}%0A`;
-            msg += `📍 Dirección: ${dir}%0A%0A`;
-            msg += `*RESUMEN DEL PEDIDO:*%0A`;
-            
-            cart.forEach(item => {
-                const labels = [item.variable, item.extra].filter(x=>x).join(' / ');
-                const labelStr = labels ? ` [${labels}]` : '';
-                msg += `• ${item.qty}x *${item.nombre}*${labelStr} - ${formatMoney(item.precio * item.qty)}%0A`;
-            });
-            
-            msg += `%0A*TOTAL A PAGAR: ${document.getElementById('cart-total').innerText}*%0A%0A_Quedo atento para acordar el método de pago y despacho._`;
-            
-            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
+            const btn = document.getElementById('btn-submit-order');
+            btn.innerHTML = '<div class="loader m-0 border-white border-t-fv-orange w-5 h-5"></div> Procesando...';
+            btn.disabled = true;
+
+            const orderData = { cliente: { nombre, tel, dir }, pedido: cart, total: document.getElementById('cart-total').innerText, catalogo: catalogConfig ? catalogConfig['Nombre Catálogo'] : 'General' };
+
+            if(WEBHOOK_URL !== '') {
+                // Si ya tienes el App Script conectado:
+                fetch(WEBHOOK_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(orderData) })
+                .then(() => showSuccessScreen())
+                .catch(() => { alert("Error de conexión. Intenta de nuevo."); resetBtn(btn); });
+            } else {
+                // Simulación mientras creas el Webhook
+                setTimeout(() => showSuccessScreen(), 1500);
+            }
         }
+
+        function showSuccessScreen() {
+            document.getElementById('checkout-form-view').classList.add('hidden');
+            document.getElementById('cart-footer-area').classList.add('hidden');
+            document.getElementById('success-view').classList.remove('hidden');
+            cart = []; saveCartMemory(); updateCartUI();
+        }
+
+        function resetBtn(btn) { btn.innerHTML = 'Confirmar y Enviar'; btn.disabled = false; }
 
         function shareSingleProduct() {
             const catName = catalogConfig ? catalogConfig['Nombre Catálogo'] : 'Catálogo';
-            const text = `Hola, vengo del catálogo de *${catName.toUpperCase()}*.%0AQuiero consultar sobre este producto:%0A%0A*${selectedGroup.nombre}*%0A_¿Me regalas más información?_`;
+            const link = window.location.href; // Ya tiene el parametro ?p=
+            const text = `Hola, vengo del catálogo de *${catName.toUpperCase()}*.%0AQuiero consultar sobre este producto:%0A*${selectedGroup.nombre}*%0A${link}`;
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
         }
 
-        // Arrancar App
         initApp();
     </script>
 </body>
