@@ -21,11 +21,7 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .banner-hero {
-            background-color: #002e5f; 
-            background-blend-mode: multiply;
-            background-size: cover; background-position: center;
-        }
+        .banner-hero { background-color: #002e5f; background-blend-mode: multiply; background-size: cover; background-position: center; }
 
         .variant-btn { border: 2px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; transition: all 0.2s; cursor: pointer; text-transform: uppercase; color: #4b5563; }
         .variant-btn.active { border-color: #002e5f; background-color: #002e5f; color: white; }
@@ -249,8 +245,6 @@
         const WHATSAPP_NUMBER = '3114957971'; 
         const SHEET_ID = '17a0Pxq1EOLRf86yiuM014ZluVqL2Qj1Mt8cKRDenjHc';
         const MASTER_GID = '846871297'; 
-        
-        // WEBHOOK OFICIAL
         const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxNsrRS86CdWdlB5fJJCw4abEdjh2FAT5OR6qh4FDWG0yd14zS9xojTDSfJWcizwn-a/exec'; 
         
         let catalogConfig = null;
@@ -298,7 +292,6 @@
             window.history.pushState({ modalOpen: true }, '', url);
         }
 
-        // CONTROL BOTÓN ATRÁS DEL NAVEGADOR
         window.addEventListener('popstate', function(e) {
             const cartEl = document.getElementById('cart-modal');
             const productEl = document.getElementById('product-modal');
@@ -322,31 +315,33 @@
             
             Papa.parse(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${MASTER_GID}`, {
                 download: true, header: true, skipEmptyLines: true,
+                // BLINDAJE 1: Transforma los títulos del Excel a mayúsculas y les quita los espacios fantasma
+                transformHeader: function(h) { return h.trim().toUpperCase(); },
                 complete: function(results) {
                     for (let row of results.data) {
-                        const enlace = row['Enlace']?.trim().toLowerCase();
+                        const enlace = row['ENLACE']?.trim().toLowerCase();
                         if (enlace && currentUrl.includes(enlace.replace(/https?:\/\/(www\.)?/,'').replace(/\/$/, ''))) {
                             catalogConfig = row; break;
                         }
                     }
-                    if (!catalogConfig && catQuery) catalogConfig = results.data.find(r => removeAccentsAndLower(r['Nombre Catálogo']) === catQuery);
+                    if (!catalogConfig && catQuery) catalogConfig = results.data.find(r => removeAccentsAndLower(r['NOMBRE CATÁLOGO'] || r['NOMBRE CATALOGO']) === catQuery);
                     if (!catalogConfig && results.data.length > 0) catalogConfig = results.data[0];
 
                     if(!catalogConfig) { alert("Error de configuración."); return; }
 
-                    document.title = `${catalogConfig['Titulo']} - Forwarder Venture`;
-                    document.getElementById('banner-title').innerText = catalogConfig['Titulo'];
-                    document.getElementById('banner-desc').innerText = catalogConfig['Descripción'];
+                    document.title = `${catalogConfig['TITULO']} - Forwarder Venture`;
+                    document.getElementById('banner-title').innerText = catalogConfig['TITULO'];
+                    document.getElementById('banner-desc').innerText = catalogConfig['DESCRIPCIÓN'] || catalogConfig['DESCRIPCION'];
                     
-                    const logoUrl = catalogConfig['Logo'] || catalogConfig['Imagen Logo'] || 'logo.png';
+                    const logoUrl = catalogConfig['LOGO'] || catalogConfig['IMAGEN LOGO'] || 'logo.png';
                     document.getElementById('main-logo').src = logoUrl;
                     document.getElementById('dynamic-favicon').href = logoUrl;
                     
-                    if(catalogConfig['Imagen Banner']) {
-                        document.getElementById('banner-section').style.backgroundImage = `linear-gradient(90deg, rgba(0,46,95,0.95) 0%, rgba(0,46,95,0.6) 100%), url('${catalogConfig['Imagen Banner']}')`;
+                    if(catalogConfig['IMAGEN BANNER']) {
+                        document.getElementById('banner-section').style.backgroundImage = `linear-gradient(90deg, rgba(0,46,95,0.95) 0%, rgba(0,46,95,0.6) 100%), url('${catalogConfig['IMAGEN BANNER']}')`;
                     }
 
-                    let catalogGid = catalogConfig['GID Hoja']?.toString().trim() || (catalogConfig['Enlace']?.match(/gid=([0-9]+)/) || [])[1] || '0';
+                    let catalogGid = catalogConfig['GID HOJA']?.toString().trim() || (catalogConfig['ENLACE']?.match(/gid=([0-9]+)/) || [])[1] || '0';
                     loadProductsData(catalogGid);
                 }
             });
@@ -355,6 +350,8 @@
         function loadProductsData(gid) {
             Papa.parse(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`, {
                 download: true, header: true, skipEmptyLines: true,
+                // BLINDAJE 1: Limpia espacios en las columnas
+                transformHeader: function(h) { return h.trim().toUpperCase(); },
                 complete: function(results) {
                     const tempGroups = {};
                     
@@ -363,11 +360,10 @@
                         let pSku = row['PARENT SKU']?.toString().trim();
                         
                         if (!row['NOMBRE'] && !sku && !pSku) return;
-                        if ((row['VISIBLE'] || '').toString().trim().toUpperCase() === 'NO') return;
+                        if ((row['VISIBLE'] || '').toString().trim() === 'NO') return;
 
-                        // ARREGLO DE SKUS FANTASMAS
                         if(!pSku) pSku = sku || `FILA-${index}`;
-                        if(!sku) sku = `VAR-${index}`; // Evita sobreescribir variantes sin SKU
+                        if(!sku) sku = `VAR-${index}`; 
 
                         let pStr = (row['PRECIO DE VENTA'] || row['PRECIO 1'] || '0').toString();
                         pStr = pStr.replace(/[,.]\d{2}$/, ''); 
@@ -381,6 +377,18 @@
                         const rawImgs = (row['IMAGEN'] || '').split('|').map(i => i.trim()).filter(i => i.startsWith('http') && !i.includes('cloudinary'));
                         const imgs = rawImgs.length > 0 ? rawImgs : ['https://via.placeholder.com/400?text=Sin+Imagen'];
 
+                        const safeVariable = superClean(mainVarStr);
+                        const safeExtra = superClean(extraStr);
+
+                        // BLINDAJE 2: SISTEMA ANTI-CLONES (Evita que SKUs duplicados maten las variables)
+                        let variantKey = sku;
+                        if (tempGroups[pSku] && tempGroups[pSku].skuMap[variantKey]) {
+                            let existing = tempGroups[pSku].skuMap[variantKey];
+                            if (existing.variable !== safeVariable || existing.extra !== safeExtra) {
+                                variantKey = sku + '-DUPLICADO-' + index; 
+                            }
+                        }
+
                         if (!tempGroups[pSku]) {
                             tempGroups[pSku] = {
                                 id: pSku,
@@ -393,17 +401,16 @@
                             };
                         }
 
-                        if (!tempGroups[pSku].skuMap[sku]) {
-                            tempGroups[pSku].skuMap[sku] = { sku: sku, variable: superClean(mainVarStr), extra: superClean(extraStr), imgs: imgs, precio: precioVenta };
+                        if (!tempGroups[pSku].skuMap[variantKey]) {
+                            tempGroups[pSku].skuMap[variantKey] = { sku: sku, variable: safeVariable, extra: safeExtra, imgs: imgs, precio: precioVenta };
                         } else {
-                            // COMBINAR IMÁGENES SI SE REPITE EL SKU (Mismo proveedor o múltiples links)
-                            let currentImgs = tempGroups[pSku].skuMap[sku].imgs;
+                            let currentImgs = tempGroups[pSku].skuMap[variantKey].imgs;
                             let combinedImgs = [...new Set([...currentImgs, ...rawImgs])];
                             if(rawImgs.length > 0) combinedImgs = combinedImgs.filter(i => !i.includes('Sin+Imagen'));
-                            tempGroups[pSku].skuMap[sku].imgs = combinedImgs;
+                            tempGroups[pSku].skuMap[variantKey].imgs = combinedImgs;
 
-                            if (precioVenta > tempGroups[pSku].skuMap[sku].precio) {
-                                tempGroups[pSku].skuMap[sku].precio = precioVenta;
+                            if (precioVenta > tempGroups[pSku].skuMap[variantKey].precio) {
+                                tempGroups[pSku].skuMap[variantKey].precio = precioVenta;
                             }
                         }
                     });
@@ -462,7 +469,7 @@
                 grid.insertAdjacentHTML('beforeend', slice.map(p => {
                     const displayImg = p.mainImg || p.variaciones[0].imgs[0]; 
                     return `
-                    <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1 group" onclick="openModal('${p.id}')">
+                    <div class="bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 flex flex-col cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1 group" onclick="openModal('${p.id}')">
                         <div class="aspect-square relative bg-white overflow-hidden p-3">
                             <img src="${displayImg}" loading="lazy" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/400?text=FV'">
                             <div class="absolute top-2 left-2 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[8px] font-black uppercase text-fv-blue border border-gray-100 shadow-sm">${p.tipo}</div>
@@ -513,7 +520,6 @@
             if (selectedGroup.descripcion) { descEl.innerText = selectedGroup.descripcion; descEl.classList.remove('hidden'); } 
             else { descEl.classList.add('hidden'); }
 
-            // GALERÍA DE IMÁGENES RESTAURADA
             const gallery = document.getElementById('modal-gallery');
             if(selectedVariant.imgs.length > 1) {
                 gallery.classList.remove('hidden');
@@ -536,7 +542,6 @@
             if (availableExtras.length > 0) document.getElementById('extra-container').innerHTML = availableExtras.map(e => `<button onclick="selectExtra('${e}')" class="variant-btn ${e === currentExtra ? 'active' : ''}">${e}</button>`).join('');
         }
 
-        // FUNCIÓN PARA CAMBIAR IMAGEN EN LA GALERÍA
         function changeModalImg(url, el) {
             document.getElementById('modal-img').src = url;
             document.querySelectorAll('#modal-gallery > div').forEach(d => d.classList.replace('border-fv-orange', 'border-transparent'));
@@ -623,7 +628,7 @@
             btn.innerHTML = '<div class="loader m-0 border-white border-t-fv-orange w-5 h-5"></div> Procesando...';
             btn.disabled = true;
 
-            const orderData = { cliente: { nombre, tel, dir }, pedido: cart, total: document.getElementById('cart-total').innerText, catalogo: catalogConfig ? catalogConfig['Nombre Catálogo'] : 'General' };
+            const orderData = { cliente: { nombre, tel, dir }, pedido: cart, total: document.getElementById('cart-total').innerText, catalogo: catalogConfig ? catalogConfig['NOMBRE CATÁLOGO'] || catalogConfig['NOMBRE CATALOGO'] : 'General' };
 
             fetch(WEBHOOK_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(orderData) })
             .then(() => showSuccessScreen())
@@ -640,9 +645,8 @@
         function resetBtn(btn) { btn.innerHTML = 'Confirmar y Enviar'; btn.disabled = false; }
 
         function shareSingleProduct() {
-            const catName = catalogConfig ? catalogConfig['Nombre Catálogo'] : 'Catálogo';
+            const catName = catalogConfig ? catalogConfig['NOMBRE CATÁLOGO'] || catalogConfig['NOMBRE CATALOGO'] : 'Catálogo';
             const link = window.location.href; 
-            // SKU INCLUIDO EN WHATSAPP DESDE EL MODAL
             const text = `Hola, vengo del catálogo de *${catName.toUpperCase()}*.%0AQuiero consultar sobre este producto:%0A*${selectedGroup.nombre}* [SKU: ${selectedVariant.sku}]%0A${link}`;
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
         }
@@ -650,17 +654,16 @@
         function quickShare(event, id) {
             event.stopPropagation();
             const g = allGroups.find(p => p.id === id);
-            const v = g.variaciones[0]; // Tomamos la primera variante para el SKU
-            const catName = catalogConfig ? catalogConfig['Nombre Catálogo'] : 'Catálogo';
+            const v = g.variaciones[0]; 
+            const catName = catalogConfig ? catalogConfig['NOMBRE CATÁLOGO'] || catalogConfig['NOMBRE CATALOGO'] : 'Catálogo';
             const link = `${window.location.origin}${window.location.pathname}?cat=${encodeURIComponent(catName)}&p=${id}`;
-            // SKU INCLUIDO EN WHATSAPP RÁPIDO
             const text = `Hola, vengo del catálogo de *${catName.toUpperCase()}*.%0AQuiero consultar sobre este producto:%0A*${g.nombre}* [SKU: ${v.sku}]%0A${link}`;
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
         }
         
         function sendOrderWhatsApp() {
             if(cart.length === 0) return;
-            const catName = catalogConfig ? catalogConfig['Nombre Catálogo'] : 'Catálogo';
+            const catName = catalogConfig ? catalogConfig['NOMBRE CATÁLOGO'] || catalogConfig['NOMBRE CATALOGO'] : 'Catálogo';
             let msg = `🛍️ *NUEVO PEDIDO RÁPIDO - ${catName.toUpperCase()}*%0A%0A`;
             
             cart.forEach(item => {
@@ -672,7 +675,7 @@
             msg += `%0A*TOTAL A PAGAR: ${document.getElementById('cart-total').innerText}*%0A_Por favor, confírmame la disponibilidad._`;
             
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
-            setTimeout(() => { cart = []; updateCartUI(); toggleCart(); }, 1000); 
+            setTimeout(() => { cart = []; saveCartMemory(); updateCartUI(); toggleCart(); }, 1000); 
         }
 
         initApp();
