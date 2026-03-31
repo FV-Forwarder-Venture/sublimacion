@@ -43,7 +43,7 @@
     <div class="max-w-[1500px] mx-auto bg-white min-h-screen flex flex-col shadow-2xl w-full relative">
         
         <header class="bg-white/95 backdrop-blur-md px-6 py-4 sticky top-0 z-50 flex justify-between items-center border-b border-gray-100 shadow-sm h-[80px]">
-            <img id="main-logo" src="logo.png" alt="Forwarder Venture" class="w-[120px] md:w-[150px] object-contain" onerror="this.src='https://via.placeholder.com/150x40?text=FORWARDER'">
+            <img id="main-logo" src="logo.png" alt="Forwarder Venture" class="w-[120px] md:w-[150px] object-contain cursor-pointer" onclick="window.location.reload()" onerror="this.src='https://via.placeholder.com/150x40?text=FORWARDER'">
             <button onclick="toggleCart()" class="hidden md:flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-xl hover:bg-gray-100 transition border border-gray-200 shadow-sm">
                 <i class="fa-solid fa-cart-shopping text-xl text-fv-blue"></i>
                 <span class="font-black text-sm">Mi Carrito</span>
@@ -84,6 +84,7 @@
                     </div>
 
                     <div>
+                        <button id="btn-ver-todo" onclick="filterType('Ver Todo')" class="w-full mb-3 px-4 py-2 md:py-3 rounded-xl text-[10px] md:text-xs font-black whitespace-nowrap transition-all border text-center bg-fv-blue text-white border-fv-blue shadow-md">VER TODO</button>
                         <label class="hidden md:block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Categorías</label>
                         <nav id="category-nav" class="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible hide-scrollbar pb-2 md:pb-0 w-full"></nav>
                     </div>
@@ -313,7 +314,6 @@
             const currentUrl = window.location.href.toLowerCase();
             const catQuery = getUrlParameter('cat')?.toLowerCase(); 
             
-            // AGREGADO ROMPE-CACHÉ (Para evitar retrasos de 5 minutos de Google Sheets)
             const noCache = new Date().getTime();
             Papa.parse(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${MASTER_GID}&t=${noCache}`, {
                 download: true, header: true, skipEmptyLines: true,
@@ -354,6 +354,11 @@
                 download: true, header: true, skipEmptyLines: true,
                 transformHeader: function(h) { return h.trim().toUpperCase(); },
                 complete: function(results) {
+                    
+                    // LÓGICA INTELIGENTE PARA NIÑOS
+                    const catNameStr = catalogConfig ? (catalogConfig['NOMBRE CATÁLOGO'] || catalogConfig['NOMBRE CATALOGO'] || '').toLowerCase() : '';
+                    const isNinos = catNameStr.includes('niños') || catNameStr.includes('ninos');
+                    
                     const tempGroups = {};
                     
                     results.data.forEach((row, index) => {
@@ -361,10 +366,6 @@
                         let pSku = row['PARENT SKU']?.toString().trim();
                         
                         if (!row['NOMBRE'] && !sku && !pSku) return;
-                        
-                        // LÓGICA DE VISIBILIDAD BLINDADA
-                        let visibleFlag = (row['VISIBLE'] || row['ESTADO'] || '').toString().trim().toUpperCase();
-                        if (visibleFlag === 'NO' || visibleFlag === 'AGOTADO' || visibleFlag === 'FALSO' || visibleFlag === '0') return;
 
                         if(!pSku) pSku = sku || `FILA-${index}`;
                         if(!sku) sku = `VAR-${index}`; 
@@ -395,13 +396,22 @@
                         if (!variantKey || variantKey === '-') {
                             variantKey = 'DEFAULT';
                         }
+                        
+                        // ASIGNACIÓN DE CATEGORÍA
+                        let tipoFinal = '';
+                        if (isNinos) {
+                            tipoFinal = row['EXTRA'] || row['EXTRAS'] || 'General';
+                        } else {
+                            tipoFinal = row['TIPO'] || row['MARCA'] || 'General';
+                        }
+                        tipoFinal = tipoFinal.trim() || 'General';
 
                         if (!tempGroups[pSku]) {
                             tempGroups[pSku] = {
                                 id: pSku,
                                 nombre: row['NOMBRE']?.trim() || 'Producto',
                                 descripcion: descStr,
-                                tipo: (row['TIPO'] || row['MARCA'] || 'General').trim(),
+                                tipo: tipoFinal,
                                 mainImg: mainImgOverride, 
                                 index: index,
                                 skuMap: {}
@@ -438,10 +448,21 @@
         }
 
         function updateCategoryNav() {
-            const types = ['Ver Todo', ...new Set(allGroups.map(p => p.tipo))].sort();
+            const types = [...new Set(allGroups.map(p => p.tipo))].sort();
             document.getElementById('category-nav').innerHTML = types.map(t => {
-                return `<button onclick="filterType('${t}')" class="px-4 py-2 md:py-3 rounded-xl text-[10px] md:text-xs font-black whitespace-nowrap transition-all border text-left ${t === currentCategory ? "bg-fv-blue text-white border-fv-blue shadow-md" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}">${t.toUpperCase()}</button>`;
+                const isActive = t === currentCategory;
+                const baseClass = "px-4 py-2 md:py-3 rounded-xl text-[10px] md:text-xs font-black whitespace-nowrap transition-all border text-left shrink-0";
+                const colorClass = isActive ? "bg-fv-blue text-white border-fv-blue shadow-md" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50";
+                return `<button onclick="filterType('${t}')" class="${baseClass} ${colorClass}">${t.toUpperCase()}</button>`;
             }).join('');
+            
+            // Estilizar botón "Ver Todo"
+            const btnVerTodo = document.getElementById('btn-ver-todo');
+            if(currentCategory === 'Ver Todo') {
+                btnVerTodo.className = "w-full mb-3 px-4 py-2 md:py-3 rounded-xl text-[10px] md:text-xs font-black whitespace-nowrap transition-all border text-center bg-fv-blue text-white border-fv-blue shadow-md";
+            } else {
+                btnVerTodo.className = "w-full mb-3 px-4 py-2 md:py-3 rounded-xl text-[10px] md:text-xs font-black whitespace-nowrap transition-all border text-center bg-white text-gray-500 border-gray-200 hover:bg-gray-50";
+            }
         }
 
         function filterType(t) { currentCategory = t; updateCategoryNav(); applyFilters(); }
