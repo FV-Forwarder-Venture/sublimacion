@@ -313,7 +313,9 @@
             const currentUrl = window.location.href.toLowerCase();
             const catQuery = getUrlParameter('cat')?.toLowerCase(); 
             
-            Papa.parse(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${MASTER_GID}`, {
+            // AGREGADO ROMPE-CACHÉ (Para evitar retrasos de 5 minutos de Google Sheets)
+            const noCache = new Date().getTime();
+            Papa.parse(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${MASTER_GID}&t=${noCache}`, {
                 download: true, header: true, skipEmptyLines: true,
                 transformHeader: function(h) { return h.trim().toUpperCase(); },
                 complete: function(results) {
@@ -347,7 +349,8 @@
         }
 
         function loadProductsData(gid) {
-            Papa.parse(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`, {
+            const noCache = new Date().getTime();
+            Papa.parse(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}&t=${noCache}`, {
                 download: true, header: true, skipEmptyLines: true,
                 transformHeader: function(h) { return h.trim().toUpperCase(); },
                 complete: function(results) {
@@ -358,7 +361,10 @@
                         let pSku = row['PARENT SKU']?.toString().trim();
                         
                         if (!row['NOMBRE'] && !sku && !pSku) return;
-                        if ((row['VISIBLE'] || '').toString().trim().toUpperCase() === 'NO') return;
+                        
+                        // LÓGICA DE VISIBILIDAD BLINDADA
+                        let visibleFlag = (row['VISIBLE'] || row['ESTADO'] || '').toString().trim().toUpperCase();
+                        if (visibleFlag === 'NO' || visibleFlag === 'AGOTADO' || visibleFlag === 'FALSO' || visibleFlag === '0') return;
 
                         if(!pSku) pSku = sku || `FILA-${index}`;
                         if(!sku) sku = `VAR-${index}`; 
@@ -525,7 +531,6 @@
             if (selectedGroup.descripcion) { descEl.innerText = selectedGroup.descripcion; descEl.classList.remove('hidden'); } 
             else { descEl.classList.add('hidden'); }
 
-            // GALERÍA DE IMÁGENES RESTAURADA
             const gallery = document.getElementById('modal-gallery');
             if(selectedVariant.imgs.length > 1) {
                 gallery.classList.remove('hidden');
@@ -548,7 +553,6 @@
             if (availableExtras.length > 0) document.getElementById('extra-container').innerHTML = availableExtras.map(e => `<button onclick="selectExtra('${e}')" class="variant-btn ${e === currentExtra ? 'active' : ''}">${e}</button>`).join('');
         }
 
-        // FUNCIÓN PARA CAMBIAR IMAGEN EN LA GALERÍA (RESTAURADA)
         function changeModalImg(url, el) {
             document.getElementById('modal-img').src = url;
             document.querySelectorAll('#modal-gallery > div').forEach(d => d.classList.replace('border-fv-orange', 'border-transparent'));
