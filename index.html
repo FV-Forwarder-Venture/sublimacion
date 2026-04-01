@@ -679,7 +679,7 @@
         function shareSingleProduct() {
             const catName = catalogConfig ? catalogConfig['NOMBRE CATÁLOGO'] || catalogConfig['NOMBRE CATALOGO'] : 'Catálogo';
             const link = window.location.href; 
-            const text = `Hola, vengo del catálogo de *${catName.toUpperCase()}*.%0AQuiero consultar sobre este producto:%0A*${selectedGroup.nombre}* [SKU: ${selectedVariant.sku}]%0A${link}`;
+            const text = `Hola, vengo del catálogo de *${catName.toUpperCase()}*.*Quiero consultar sobre este producto:*${selectedGroup.nombre}* [SKU: ${selectedVariant.sku}]%0A${link}`;
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
         }
 
